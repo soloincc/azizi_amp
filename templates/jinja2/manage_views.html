@@ -1,0 +1,84 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Saved Views</h5>
+                </div>
+                <div class="ibox-content">
+                    <!-- Table Markup -->
+                    <table id="views_table" class="table" data-paging="true" data-filtering="true" data-sorting="true" data-editing="true" data-state="true"></table>
+
+                    <!-- Editing Modal Markup -->
+                    <div class="modal fade" id="editor-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
+                        <style scoped>
+                            
+                        </style>
+                        <div class="modal-dialog" role="document">
+                            <form class="modal-content form-horizontal" id="editor">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                                    <h4 class="modal-title" id="editor-title">Edit a View</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="number" id="view_id" name="view_id" class="hidden"/>
+                                    <div class="form-group required">
+                                        <label for="view_ame" class="col-sm-3 control-label">View Name</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="view_name" name="view_name" placeholder="View Name" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="auto_process" class="col-sm-3 control-label">Auto Process</label>
+                                        <div class="col-sm-9">
+                                            <select class="form-control" id="auto_process" name="auto_process">
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Save changes</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type='text/javascript' src="{{ static('plugins/metisMenu/jquery.metisMenu.js') }}"></script>
+<script type='text/javascript' src="{{ static('plugins/slimscroll/jquery.slimscroll.min.js') }}"></script>
+
+<!-- Custom and plugin javascript -->
+<script type='text/javascript' src="{{ static('plugins/pace/pace.min.js') }}"></script>
+
+<!-- FooTable -->
+<script type='text/javascript' src="{{ static('bower/footables/compiled/footable.js') }}"></script>
+<script type="text/javascript" src="{{ static('bower/sweetalert/dist/sweetalert.min.js') }}"></script>
+<script type='text/javascript' src="{{ static('js/dm_dashboard.js') }}"></script>
+
+<script>
+    $(document).ready(function(){
+        BadiliDash.data = {};
+
+        dash.data = {{ all_data | safe }};
+        dash.initiateViewsManagement();
+    });
+</script>
+
+</div>
+
+{% endblock %}

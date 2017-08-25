@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>{{ page_title }}</title>
+
+    <link rel="stylesheet" href="{{ static('bower/bootstrap/dist/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ static('plugins/font-awesome/css/font-awesome.min.css') }}" />
+    <link rel="stylesheet" href="{{ static('css/animate.css') }}" />
+    <link rel="stylesheet" href="{{ static('css/style.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/sweetalert/dist/sweetalert.css') }}" />
+
+    <script type='text/javascript' src="{{ static('bower/jquery/dist/jquery.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('bower/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('js/sprintf.js') }}"></script>
+
+</head>
+<body class="gray-bg">
+    {% block main_content %}
+    {% endblock %}
+    <div id="messageNotification">
+        <div></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,151 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class='row'>
+        <div class='col-lg-9'>
+            <div class='row'>
+                <div class='col-lg-6'>
+                    <div class='ibox float-e-margins'>
+                        <div class='ibox-title'>All forms in the project</div>
+                        <div class='ibox-content'>
+                            <div id="all_forms"></div>
+                            <div>
+                                <div>Search:  <input id="searchValue" style="margin-right: 15px;" /></div>
+                                <div id="form_structure"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class='col-lg-6'>
+                    <div class='ibox float-e-margins'>
+                        <div class='ibox-title'>Tables to map the form fields to</div>
+                        <div class='ibox-content'>
+                            <div id="all_tables"></div>
+                            <div id="table_structure"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class='col-lg-3'>
+            <div class='ibox float-e-margins'>
+                <div class='ibox-title'>Instructions on how to use the mapper</div>
+                <div class='ibox-content'></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Saved Mappings</h5>
+                </div>
+                <div class="ibox-content">
+                    <!-- Table Markup -->
+                    <table id="mappings_table" class="table" data-paging="true" data-filtering="true" data-sorting="true" data-editing="true" data-state="true"></table>
+
+                    <!-- Editing Modal Markup -->
+                    <div class="modal fade" id="editor-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
+                        <style scoped>
+                            
+                        </style>
+                        <div class="modal-dialog" role="document">
+                            <form class="modal-content form-horizontal" id="editor">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                                    <h4 class="modal-title" id="editor-title">Edit a View</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="number" id="view_id" name="view_id" class="hidden"/>
+                                    <div class="form-group required">
+                                        <label for="view_ame" class="col-sm-3 control-label">Regex Validator</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="regex_validator" name="regex_validator" placeholder="Regex" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="auto_process" class="col-sm-3 control-label">Auto Process</label>
+                                        <div class="col-sm-9">
+                                            <select class="form-control" id="auto_process" name="auto_process">
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Save changes</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type='text/javascript' src="{{ static('plugins/metisMenu/jquery.metisMenu.js') }}"></script>
+<script type='text/javascript' src="{{ static('plugins/slimscroll/jquery.slimscroll.min.js') }}"></script>
+
+<!-- jqwidgets -->
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcore.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxdata.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxbuttons.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxscrollbar.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxpanel.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxdatatable.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxtree.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxtreegrid.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxmenu.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxgrid.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxgrid.columnsresize.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxdropdownlist.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcombobox.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxgrid.selection.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcheckbox.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxradiobutton.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxlistbox.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxdragdrop.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxnotification.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxexpander.js') }}"></script>
+    
+    <script type="text/javascript" src="{{ static('bower/jQuery-Autocomplete/dist/jquery.autocomplete.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/bootstrap-validator/dist/validator.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jquery-serialize-object/dist/jquery.serialize-object.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jquery-form/jquery.form.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/sweetalert/dist/sweetalert.min.js') }}"></script>
+
+
+<!-- Custom and plugin javascript -->
+<script type='text/javascript' src="{{ static('plugins/pace/pace.min.js') }}"></script>
+
+<!-- FooTable -->
+<script type='text/javascript' src="{{ static('bower/footables/compiled/footable.js') }}"></script>
+<script type="text/javascript" src="{{ static('bower/sweetalert/dist/sweetalert.min.js') }}"></script>
+<script type='text/javascript' src="{{ static('js/dm_dashboard.js') }}"></script>
+
+<script>
+    $(document).ready(function(){
+        BadiliDash.data = {};
+
+        dash.data.all_forms = {{ all_forms | safe}};
+        dash.data.all_tables = {{ db_tables | safe}};
+        dash.data.all_columns = {{ tables_columns | safe}};
+        dash.data.mappings = {{ mappings | safe}};
+        dash.initiateManageMappings();
+    });
+</script>
+
+</div>
+
+{% endblock %}

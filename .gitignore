@@ -1,0 +1,8 @@
+.DS_Store
+*.xlsx
+*.pyc
+env
+static/bower
+static/admin
+js/plugins
+static/plugins

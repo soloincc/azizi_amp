@@ -1,0 +1,93 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div class="wrapper wrapper-content animated fadeInRight">
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+
+    <div id="dashboard">
+
+        <div id="forms">
+            <div id="all_forms"></div>
+            <div id="form_structure"></div>
+        </div>
+        <div id="buttons">
+            <!-- button class="action_btn btn btn-w-m btn-primary" id="get_data_btn" data-toggle="modal" data-target="#confirmModal">Get Data</button -->
+            <button class="action_btn btn btn-w-m btn-primary" id="get_data_btn">Get Data</button>
+            <button class="action_btn btn btn-w-m btn-info" id="update_btn">Update Structure</button>
+            <button class="action_btn btn btn-w-m btn-success" id="refresh_btn">Refresh Forms</button>
+            <button class="action_btn btn btn-w-m btn-danger" id="delete_btn">Delete</button>
+        </div>
+        <div id="models">
+            <div id="destination">
+                <label>Destination</label>
+                <div style='margin-top: 10px;' class='custom'><span>Custom Postgres</span></div>
+                <div style='margin-top: 10px;' class='other'><span>Other</span></div>
+            </div>
+            <div id="all_models"></div>
+            <div id="model_structure"></div>
+        </div>
+    </div>
+    
+    <div class="modal inmodal" id="confirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content animated bounceInRight">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <i class="fa fa-laptop modal-icon"></i>
+                    <h4 class="modal-title">Save View</h4>
+                    <small class="font-bold">Do you want to save this view</small>
+                </div>
+                <div class="modal-body">
+                    <p>Saving a view, <strong>generates a proper relational database</strong> from the submitted data. This allows user to run analysis on the saved data as well as process the submitted data</p>
+                  
+                    <div class="form-group" id='view_name-group'>
+                        <label class='control-label'>View Name</label>
+                        <input type="text" id='view_name' placeholder="Enter the name of the view" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                    <button type="button" id='just_download' class="btn btn-warning">Just Download</button>
+                    <button type="button" id='download_save' class="btn btn-primary">Download & Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcore.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxdata.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxbuttons.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxscrollbar.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxpanel.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxdatatable.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxtree.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxtreegrid.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxmenu.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxgrid.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxgrid.columnsresize.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxdropdownlist.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcombobox.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxgrid.selection.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcheckbox.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxradiobutton.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxlistbox.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxnotification.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jQuery-Autocomplete/dist/jquery.autocomplete.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/bootstrap-validator/dist/validator.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jquery-serialize-object/dist/jquery.serialize-object.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jquery-form/jquery.form.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/sweetalert/dist/sweetalert.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('js/dm_dashboard.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+            BadiliDash.data = {};
+
+            dash.data.all_forms = {{ all_forms | safe}};
+            dash.initiate();
+        });
+    </script>
+</div>
+
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block main_content %}
+
+<div id="wrapper">
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+    
+    <nav class="navbar-default navbar-static-side" role="navigation">
+        <div class="sidebar-collapse">
+            <ul class="nav metismenu" id="side-menu">
+                <li class="nav-header">
+                    <div class="dropdown profile-element"> <span>
+                            <img alt="image" class="img" src="static/img/adgg_logo.jpg" />
+                             </span>
+                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                            <span class="clear"> <span class="block m-t-xs"> <strong class="font-bold">Administrator</strong>
+                             </span> <span class="text-muted text-xs block">Administrator<b class="caret"></b></span> </span> </a>
+                        <ul class="dropdown-menu animated fadeInRight m-t-xs">
+                            <li><a href="profile.html">Profile</a></li>
+                            <li class="divider"></li>
+                            <li><a href="/logout">Logout</a></li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li><a href="/dashboard"><i class="fa fa-dashboard"></i> <span class="nav-label">Overview</span></a></li>
+                <li><a href="/download"><i class="fa fa-download"></i> <span class="nav-label">Download</span></a></li>
+                <li><a href="/manage_views"><i class="fa fa-th"></i> <span class="nav-label">Manage Views</span></a></li>
+                <li><a href="/manage_mappings"><i class="fa fa-link"></i> <span class="nav-label">Manage Mappings</span></a></li>
+                <li><a href="#"><i class="fa fa-columns"></i> <span class="nav-label">Processing Errors</span></a></li>
+                <li class="divider"></li>
+                <li><a href="#"><i class="fa fa-mobile"></i> <span class="nav-label">Farmer Analytics</span></a></li>
+                <li><a href="#"><i class="fa fa-list-alt"></i> <span class="nav-label">Animal Analytics</span></a></li>
+                <li><a href="#"><i class="fa fa-th-list"></i> <span class="nav-label">AI Analytics</span></a></li>
+            </ul>
+
+        </div>
+    </nav>
+
+    <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom">
+            <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+                <div class="navbar-header">
+                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+                    <form role="search" class="navbar-form-custom" action="search_results.html">
+                        <div class="form-group">
+                            <input type="text" placeholder="Search for something..." class="form-control" name="top-search" id="top-search">
+                        </div>
+                    </form>
+                </div>
+                <ul class="nav navbar-top-links navbar-right">
+                    <li>
+                        <span class="m-r-sm text-muted welcome-message">Welcome to ADGG Dashboard v2</span>
+                    </li>
+                    <li>
+                        <a href="/logout">
+                            <i class="fa fa-sign-out"></i> Log out
+                        </a>
+                    </li>
+                    <li>
+                        <a class="right-sidebar-toggle">
+                            <i class="fa fa-tasks"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="row wrapper border-bottom white-bg page-heading">
+            <div class="col-lg-10">
+                <ol class="breadcrumb breadcrumb_ol">
+                    <li>
+                        <a href="/dashboard">Home</a>
+                    </li>
+                    <li class="active">
+                        <strong>{{ section_title }}</strong>
+                    </li>
+                </ol>
+            </div>
+            <div class="col-lg-2">
+
+            </div>
+        </div>
+
+        {% block dash_content %}
+        {% endblock %}
+
+        <div class="modal inmodal fade" id="spinnerModal" tabindex="-1" aria-hidden="true">
+            <div class="spinner">
+                <div class="sk-spinner sk-spinner-wave">
+                    <div class="sk-rect1"></div>
+                    <div class="sk-rect2"></div>
+                    <div class="sk-rect3"></div>
+                    <div class="sk-rect4"></div>
+                    <div class="sk-rect5"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="pull-right">
+                Designed and Developed by <strong><a href='https://badili.co.ke'>Badili Innovations</a></strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mainly scripts -->
+    <script type='text/javascript' src="{{ static('plugins/metisMenu/jquery.metisMenu.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/slimscroll/jquery.slimscroll.min.js') }}"></script>
+
+    <!-- Flot -->
+    <script type='text/javascript' src="{{ static('plugins/flot/jquery.flot.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/flot/jquery.flot.tooltip.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/flot/jquery.flot.spline.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/flot/jquery.flot.resize.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/flot/jquery.flot.pie.js') }}"></script>
+
+    <!-- Peity -->
+    <script type='text/javascript' src="{{ static('plugins/peity/jquery.peity.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/demo/peity-demo.js') }}"></script>
+
+    <!-- Custom and plugin javascript -->
+    <script type='text/javascript' src="{{ static('js/inspinia.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/pace/pace.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/jquery-ui/jquery-ui.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/gritter/jquery.gritter.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/sparkline/jquery.sparkline.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/demo/sparkline-demo.js') }}"></script>
+    <script type='text/javascript' src="{{ static('bower/chartjs/dist/Chart.min.js') }}"></script>
+    <script type='text/javascript' src="{{ static('plugins/toastr/toastr.min.js') }}"></script>
+
+{% endblock %}
