@@ -287,26 +287,25 @@ def manage_mappings(request):
 def create_mapping(request):
     odk = OdkForms()
     mappings = odk.save_mapping(request)
-    return_mappings(mappings)
+    return return_mappings(mappings)
 
 
 def delete_mapping(request):
     odk = OdkForms()
     mappings = odk.delete_mapping(request)
-    return_mappings(mappings)
+    return return_mappings(mappings)
 
 
 def clear_mappings(request):
     odk = OdkForms()
     mappings = odk.clear_mappings()
-    return_mappings(mappings)
+    return return_mappings(mappings)
 
 
 def return_mappings(mappings):
     to_return = json.dumps(mappings)
     response = HttpResponse(to_return, content_type='text/json')
     response['Content-Message'] = to_return
-
     return response
 
 

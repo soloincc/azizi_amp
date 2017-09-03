@@ -811,7 +811,7 @@ BadiliDash.prototype.deleteMapping = function(row){
         data = {'mapping_id': row.value.mapping_id}
         $('#spinnermModal').modal('show');
         $.ajax({
-            type: "POST", url: "/delete_mapping/", dataType: 'json', data: JSON.stringify(data),
+            type: "POST", url: "/delete_mapping/", dataType: 'json', data: {'mappings': JSON.stringify(data)},
             error: dash.communicationError,
             success: function (data) {
                 $('#spinnermModal').modal('hide');

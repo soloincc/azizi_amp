@@ -1015,7 +1015,7 @@ class OdkForms():
         return {'error': False, 'mappings': mappings}
 
     def mapping_info(self):
-        all_mappings = FormMappings.objects.all()
+        all_mappings = FormMappings.objects.all().order_by('dest_table_name').order_by('dest_column_name')
 
         to_return = []
         for mapping in all_mappings:
@@ -1032,8 +1032,8 @@ class OdkForms():
         return {'error': False, 'mappings': mappings}
 
     def delete_mapping(self, request):
-        data = json.loads(request.body)
-        terminal.tprint(json.dumps(data), 'debug')
+        data = json.loads(request.POST['mappings'])
+        FormMappings.objects.filter(id=data['mapping_id']).delete()
 
         mappings = self.mapping_info()
         return {'error': False, 'mappings': mappings}
