@@ -41,4 +41,6 @@ urlpatterns = [
     url(r'^refresh_forms/$', views.refresh_forms, name='refresh_forms'),
     url(r'^create_mapping/$', views.create_mapping, name='create_mapping'),
     url(r'^delete_mapping/$', views.delete_mapping, name='delete_mapping'),
+    url(r'^validate_mappings/$', views.validate_mappings, name='validate_mappings'),
+    url(r'^clear_mappings/$', views.clear_mappings, name='clear_mappings'),
 ]

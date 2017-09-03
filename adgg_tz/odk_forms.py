@@ -992,7 +992,6 @@ class OdkForms():
         @todo Add data validation
         '''
         data = json.loads(request.body)
-        terminal.tprint(json.dumps(data), 'ok')
         # get the form metadata
         settings = ConfigParser()
         settings.read(self.forms_settings)
@@ -1020,8 +1019,24 @@ class OdkForms():
 
         to_return = []
         for mapping in all_mappings:
-            to_return.append(model_to_dict(mapping))
+            cur_mapping = model_to_dict(mapping)
+            cur_mapping['_checkbox'] = '<input type="checkbox" class="row-checkbox">'
+            cur_mapping['mapping_id'] = cur_mapping['id']
+            to_return.append(cur_mapping)
         return to_return
+
+    def clear_mappings(self):
+        FormMappings.objects.all().delete()
+
+        mappings = self.mapping_info()
+        return {'error': False, 'mappings': mappings}
+
+    def delete_mapping(self, request):
+        data = json.loads(request.body)
+        terminal.tprint(json.dumps(data), 'debug')
+
+        mappings = self.mapping_info()
+        return {'error': False, 'mappings': mappings}
 
     def get_db_tables(self):
         with connections['mapped'].cursor() as cursor:
@@ -1039,9 +1054,107 @@ class OdkForms():
                 cursor.execute(columns_q)
                 all_columns = cursor.fetchall()
                 for index, col in enumerate(all_columns):
-                    all_tables_columns.append({'title': col[0], 'type': col[1], 'id': index+1000, 'parent_id': parent_index, 'label': '%s (%s)' % (col[0], col[1])})
+                    all_tables_columns.append({'title': col[0], 'type': col[1], 'id': index + 1000, 'parent_id': parent_index, 'label': '%s (%s)' % (col[0], col[1])})
 
         return all_tables, all_tables_columns
+
+    def validate_mappings(self):
+        '''
+        Validate the mappings and ensure all mandatory fields have been mapped
+        '''
+        # get all the mapped tables
+        mapped_tables = FormMappings.objects.values('dest_table_name').distinct()
+        is_fully_mapped = True
+        is_mapping_valid = True
+        comments = []
+
+        for table in mapped_tables:
+            (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(table['dest_table_name'])
+            is_fully_mapped = is_fully_mapped and is_table_fully_mapped
+            is_mapping_valid = is_mapping_valid and is_table_mapping_valid
+            comments.extend(table_comments)
+
+        return is_fully_mapped, is_mapping_valid, comments
+
+    def validate_mapped_table(self, table):
+        comments = []
+        is_fully_mapped = True
+        is_mapping_valid = True
+        mapped_columns = FormMappings.objects.filter(dest_table_name=table)
+        all_mapped_columns = {}
+        for col in mapped_columns:
+            all_mapped_columns[col.dest_column_name] = model_to_dict(col)
+
+        with connections['mapped'].cursor() as mapped_cursor:
+            dest_columns_q = 'DESC %s' % table
+            mapped_cursor.execute(dest_columns_q)
+            dest_columns = mapped_cursor.fetchall()
+
+            # loop through all the destination columns and ensure mandatory fields have been mapped
+            for dest_column in dest_columns:
+                # check if the column in mandatory and is included in the mapping
+                if dest_column[2] == 'NO':
+                    # check if it is a primary key
+                    if dest_column[3] == 'PRI' and dest_column[5] == 'auto_increment':
+                        # its a primary key and auto incrementing, so skip it
+                        continue
+                    if dest_column[0] not in all_mapped_columns:
+                        # check if we have a default value
+                        if dest_column[4] is not None:
+                            # we have a default value, so if it isn't mapped, we can safely ignore it
+                            comments.append({'type': 'warning', 'message': "The column '%s' in the table '%s' is required but it is not mapped, I will use the defined default value." % (dest_column[0], table)})
+                            continue
+                        comments.append({'type': 'danger', 'message': "The column '%s' in the table '%s' requires a value but it is not mapped" % (dest_column[0], table)})
+                        is_fully_mapped = False
+                        continue
+
+                # check the column data type
+                # check the validation regex
+                if dest_column[0] in all_mapped_columns:
+                    if all_mapped_columns[dest_column[0]]['validation_regex'] is None:
+                        comments.append({'type': 'warning', 'message': "Consider adding a validation regex for column '%s' of the table '%s'" % (dest_column[0], table)})
+
+                # If the column is of type int, check if it a foreign key
+                is_foreign_key = self.foreign_key_check(settings.DATABASES['mapped']['NAME'], table, dest_column[0])
+                if is_foreign_key is not False and is_foreign_key[0] is not None:
+                    # check that the corresponding table is fully mapped
+                    (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(is_foreign_key[1])
+                    if not is_table_fully_mapped:
+                        comments.append({'type': 'danger', 'message': "REFERENTIAL INTEGRITY FAIL: The referenced table '%s' is not fully mapped." % is_foreign_key[1]})
+                        is_fully_mapped = False
+                    if not is_table_mapping_valid:
+                        comments.append({'type': 'danger', 'message': "REFERENTIAL INTEGRITY FAIL: The referenced table '%s' mapping is not valid." % is_foreign_key[1]})
+                        is_mapping_valid = False
+
+        return is_fully_mapped, is_mapping_valid, comments
+
+    def foreign_key_check(self, schema, table, column):
+        foreign_key_check_q = '''
+            SELECT REFERENCED_TABLE_SCHEMA, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = '%s' and TABLE_NAME = '%s' and COLUMN_NAME = '%s'
+        ''' % (schema, table, column)
+
+        with connections['mapped'].cursor() as mapped_cursor:
+            mapped_cursor.execute(foreign_key_check_q)
+            foreign_keys = mapped_cursor.fetchall()
+
+            if len(foreign_keys) == 0:
+                return False
+            else:
+                # we assume that the column is only mapped to only 1 other column
+                return foreign_keys[0]
+
+    def populateDestinationTables(self):
+        # get all the destination tables from the destination schema and add them to the destination_tables table
+        with connections['mapped'].cursor() as cursor:
+            tables_q = "SHOW tables"
+            cursor.execute(tables_q)
+            tables = cursor.fetchall()
+
+            for table in tables:
+                dest_table = FormMappings(table_name=table)
+                dest_table.publish()
 
 
 def auto_process_submissions():

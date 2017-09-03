@@ -1,7 +1,7 @@
 body { margin: 0;   padding: 0;  min-width: 900px; }
 
 #dashboard #forms{ float: left; width: 80%; margin-left: 10px; }
-#form_structure{ min-height: 560px; }
+#form_structure, #table_structure{ height: 460px; }
 #forms #all_forms{ margin: 5px 0px; }
 
 #dashboard #buttons{ float: left; width: 15%; margin-left: 10px; text-align: center; }
@@ -31,3 +31,7 @@ body { margin: 0;   padding: 0;  min-width: 900px; }
 .partner_logo{ text-align: center; }
 
 #partners .usaid{ margin-top: 20%; }
+
+.table_actions{ margin-right: 15px; }
+
+#mapping_comments .alert{ padding: 0px; }

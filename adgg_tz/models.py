@@ -179,8 +179,24 @@ class FormMappings(BaseTable):
     validation_regex = models.CharField(max_length=100, null=True)
 
     class Meta:
-        unique_together = ('form_group', 'form_question')
+        unique_together = ('form_group', 'form_question', 'dest_table_name', 'dest_column_name')
         db_table = 'mappings_table'
+
+    def publish(self):
+        self.save()
+
+    def get_id(self):
+        return self.t_key
+
+
+class DestinationTables(BaseTable):
+    # define the dictionary structure
+    table_name = models.CharField(max_length=100, unique=True)
+    # the order of the table in terms of processing. Tables with lower orders should be processed first
+    table_order = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'destination_tables'
 
     def publish(self):
         self.save()

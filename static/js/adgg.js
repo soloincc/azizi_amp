@@ -17,51 +17,24 @@ function BadiliDash() {
     });
 
     this.backgroundColor1 = [
-        'rgba(255, 99,  132, 0.2)',
-        'rgba(54,  162, 235, 0.2)',
-        'rgba(255, 206, 86,  0.2)',
-        'rgba(75,  192, 192, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 159, 64,  0.2)'
+        'rgba(255, 99,  132, 0.2)', 'rgba(54,  162, 235, 0.2)', 'rgba(255, 206, 86,  0.2)', 'rgba(75,  192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)', 'rgba(255, 159, 64,  0.2)'
     ];
 
     this.backgroundColor2 = [
-        'rgba(255,128,128, 0.8)',
-        'rgba(255,156,128, 0.8)',
-        'rgba(255,184,128, 0.8)',
-        'rgba(255,212,128, 0.8)',
-        'rgba(255,241,128, 0.8)',
-        'rgba(241,255,128, 0.8)',
-        'rgba(213,255,128, 0.8)',
-        'rgba(184,255,128, 0.8)',
-        'rgba(156,255,128, 0.8)',
-        'rgba(128,255,128, 0.8)',
-        'rgba(128,255,156, 0.8)',
-        'rgba(128,255,184, 0.8)',
-        'rgba(128,255,212, 0.8)',
-        'rgba(128,255,241, 0.8)',
-        'rgba(128,241,255, 0.8)',
-        'rgba(128,212,255, 0.8)',
-        'rgba(128,184,255, 0.8)',
-        'rgba(128,156,255, 0.8)',
-        'rgba(128,128,255, 0.8)',
-        'rgba(156,128,255, 0.8)',
-        'rgba(184,128,255, 0.8)',
-        'rgba(212,128,255, 0.8)',
-        'rgba(241,128,255, 0.8)',
-        'rgba(255,128,241, 0.8)',
-        'rgba(255,128,213, 0.8)',
-        'rgba(255,128,184, 0.8)',
-        'rgba(255,128,156, 0.8)',
+        'rgba(255,128,128, 0.8)', 'rgba(255,156,128, 0.8)', 'rgba(255,184,128, 0.8)', 'rgba(255,212,128, 0.8)',
+        'rgba(255,241,128, 0.8)', 'rgba(241,255,128, 0.8)', 'rgba(213,255,128, 0.8)', 'rgba(184,255,128, 0.8)',
+        'rgba(156,255,128, 0.8)', 'rgba(128,255,128, 0.8)', 'rgba(128,255,156, 0.8)', 'rgba(128,255,184, 0.8)',
+        'rgba(128,255,212, 0.8)', 'rgba(128,255,241, 0.8)', 'rgba(128,241,255, 0.8)', 'rgba(128,212,255, 0.8)',
+        'rgba(128,184,255, 0.8)', 'rgba(128,156,255, 0.8)', 'rgba(128,128,255, 0.8)', 'rgba(156,128,255, 0.8)',
+        'rgba(184,128,255, 0.8)', 'rgba(212,128,255, 0.8)', 'rgba(241,128,255, 0.8)', 'rgba(255,128,241, 0.8)',
+        'rgba(255,128,213, 0.8)', 'rgba(255,128,184, 0.8)', 'rgba(255,128,156, 0.8)',
     ];
 
-    this.bgColors = [[
-            'rgba(255, 99,  132, 0.2)',
-            'rgba(54,  162, 235, 0.2)',
-            'rgba(255, 206, 86,  0.2)',
-            'rgba(75,  192, 192, 0.2)',
-            'rgba(153, 102, 255, 0.2)',
-            'rgba(255, 159, 64,  0.2)'
+    this.bgColors = [
+        [
+            'rgba(255, 99,  132, 0.2)', 'rgba(54,  162, 235, 0.2)', 'rgba(255, 206, 86,  0.2)', 'rgba(75,  192, 192, 0.2)',
+            'rgba(153, 102, 255, 0.2)', 'rgba(255, 159, 64,  0.2)'
         ],
         [
             '#ff8080', '#ff9c80', '#ffb880', '#ffd480', '#fff180', '#f1ff80', '#d5ff80', '#b8ff80', '#9cff80','#80ff80',
@@ -115,6 +88,45 @@ function BadiliDash() {
             dash.showTableStructure(args.item.originalItem.uid);
         }
     });
+
+    //On Global Checkbox Toggle, set all rows' checkbox to checked and toggle _selection values
+    $('#mappings_table').on("change", ".global-checkbox", function() {
+        var newValues = {};
+        if ( $(this).prop("checked") ) {
+            newValues._selection = 'True';
+            newValues._checkbox = '<input type="checkbox" class="row-checkbox" checked>';
+        } else {
+            newValues._selection = 'False';
+            newValues._checkbox = '<input type="checkbox" class="row-checkbox">';
+        }
+        $.each(dash.ft.rows.all, function( index, values ) {
+            dash.ft.rows.update(index, newValues, false);
+        });
+        dash.ft.draw();
+    });
+
+    //On Single Row Checkbox Toggle
+    $('#mappings_table').on('click', '.row-checkbox', function() {
+        var newValues = {};
+        var row = $(this).closest('tr').data('__FooTableRow__');
+        if ( $(this).prop('checked') ) {
+            //Prepare Values
+            newValues._selection = 'True';
+            newValues._checkbox = '<input type="checkbox" class="row-checkbox" checked>';
+        } else {
+            //Prepare Values
+            newValues._selection = 'False';
+            newValues._checkbox = '<input type="checkbox" class="row-checkbox">';
+
+            //Toggle globalCheckbox if checked
+            if ( $globalCheckbox.prop('checked') ) {
+                 $globalCheckbox.prop('checked', false);
+            }
+        }
+        row.val(newValues, true);
+    });
+    $('#test_mappings').on('click', this.validateMappings);
+    $('#confirm_clear_mappings').on('click', this.clearMappings);
 }
 
 BadiliDash.prototype.initiate = function(){
@@ -162,7 +174,8 @@ BadiliDash.prototype.formStructure = function (form_id) {
             } else {
                 // console.log(data);
                 dash.curFormStructure = data.structure;
-                if(window.location.pathname == '/download'){
+                console.log(window.location.pathname);
+                if(window.location.pathname == '/download/'){
                     dash.initiateFormStructureTree();
                 }
                 else{
@@ -722,9 +735,11 @@ BadiliDash.prototype.finalizeMapping = function(dragItem, dropItem, a, position,
     var form = $("#all_forms").jqxComboBox('getSelectedItem').originalItem;
     var drop_item = dash.jqxRecursion(dash.cur_table_structure, dropItem.id);
     var drag_item = dash.jqxRecursion(dash.cur_form_structure, parseInt(dragItem.id));
+    if(drag_item == undefined){
+        dash.showNotification('There was an error while mapping the fields. Please try again', 'danger', true);
+        return;
+    }
     drag_item.parent = undefined;
-    console.log(drag_item);
-    console.log(dragItem);
 
     var s_data = {'table': table, 'form': form, 'table_item': drag_item, 'drop_item': drop_item};
 
@@ -753,7 +768,9 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
     var $modal = $('#editor-modal'), $editor = $('#editor'), $editorTitle = $('#editor-title');
     var ft;
     var columns = [
-        {'name': 'mapping_id', 'title': 'Mapping ID'},
+        {'name': 'mapping_id', 'title': 'ID', 'visible': false},
+        {"name":"_selection", "title" : "Selection", 'visible': false, "sortable": false, "filterable":false},
+        {"name":"_checkbox", "title" : "<input type='checkbox' class='global-checkbox'>", 'visible': true, "sortable": false, "filterable":false},
         {'name': 'form_group', 'title': 'Form Group'},
         {'name': 'form_question', 'title': 'Survey Question'},
         {'name': 'odk_question_type', 'title': 'ODK Qst Type'},
@@ -764,7 +781,7 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
         // {'name': 'structure', 'title': 'View Structure'}
     ];
 
-    ft = FooTable.init('#mappings_table', {
+    dash.ft = FooTable.init('#mappings_table', {
         columns: columns,
         rows: data,
         editing: {
@@ -777,65 +794,129 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
                 $editorTitle.text('Add Validator');
                 $modal.modal('show');
             },
-            deleteRow: function(row){
-                if (confirm('Are you sure you want to delete this mapping?')){
-                    data = {'mapping_id': row.value.mapping_id}
-                    $('#spinnermModal').modal('show');
-                    $.ajax({
-                        type: "POST", url: "/delete_mapping/", dataType: 'json', data: {'view': JSON.stringify(data)},
-                        error: dash.communicationError,
-                        success: function (data) {
-                            $('#spinnermModal').modal('hide');
-                            if (data.error) {
-                                console.log(data.message);
-                                swal({
-                                  title: "Error!",
-                                  text: data.message,
-                                  imageUrl: "/static/img/error-icon.png"
-                                });
-                                return;
-                            }
-                            else {
-                                // all is ok, so delete the row on the interface
-                                row.delete();
-                                swal({
-                                  title: "Success",
-                                  text: "The mapping has been deleted successfully",
-                                  imageUrl: "/static/img/success-icon.png"
-                                });
-                            }
-                        }
-                    });
-                }
-            }
+            deleteRow: dash.deleteMapping
         }
     }),
     uid = 10001;
 
     $editor.on('submit', dash.submitViewEdits);
+    if(data.length != 0){
+        $('#test_mappings').removeClass('disabled');
+        $('#clear_mappings').removeClass('disabled');
+    }
+};
+
+BadiliDash.prototype.deleteMapping = function(row){
+    if (confirm('Are you sure you want to delete this mapping?')){
+        data = {'mapping_id': row.value.mapping_id}
+        $('#spinnermModal').modal('show');
+        $.ajax({
+            type: "POST", url: "/delete_mapping/", dataType: 'json', data: JSON.stringify(data),
+            error: dash.communicationError,
+            success: function (data) {
+                $('#spinnermModal').modal('hide');
+                if (data.error) {
+                    swal({
+                      title: "Error!",
+                      text: data.message,
+                      imageUrl: "/static/img/error-icon.png"
+                    });
+                    return;
+                }
+                else {
+                    // all is ok, so delete the row on the interface
+                    row.delete();
+                    swal({
+                      title: "Success",
+                      text: "The mapping has been deleted successfully",
+                      imageUrl: "/static/img/success-icon.png"
+                    });
+                }
+            }
+        });
+    }
 };
 
 BadiliDash.prototype.jqxRecursion = function (objects, element_id) {
     console.log('Element id'+ element_id);
     for (var i = 0; i < objects.length; i++) {
-        console.log(objects[i].items);
         if (element_id == objects[i].id) {
             return objects[i];
         } 
-        else if (objects[i].items != undefined) {
-      
-        
+        else if (objects[i].items != undefined) {  
             var item = dash.jqxRecursion(objects[i].items, element_id);
-            return item;
+            if (item != undefined){
+                return item;
+            }
         };
     };
     return undefined;
+};
+
+BadiliDash.prototype.validateMappings = function(){
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/validate_mappings/", dataType: 'json', data: {},
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            if (data.error) {
+                console.log(data.message);
+                swal({
+                  title: "Error!",
+                  text: data.message,
+                  imageUrl: "/static/img/error-icon.png"
+                });
+                return;
+            }
+            else {
+                // all is ok, so delete the row on the interface
+                if (data.comments.length != 0){
+                    var message = '';
+                    $.each(data.comments, function(){
+                        message += sprintf('<p class="alert text-%s">%s</p>', this.type, this.message);
+                    });
+                    message = sprintf('<div class="alert alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>%s</div>', message);
+                }
+                else{
+                    message = '<div class="alert alert-success alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>The mappings are valid. No warning/comments</div>';
+                }
+                $('#mapping_comments').append(message);
+                if(data.is_fully_mapped && data.is_mapping_valid){
+                    $('#dry_run').removeClass('disabled');
+                }
+            }
+        }
+    });
 };
 
 BadiliDash.prototype.initiateManageMappings = function(){
     this.initiateAllForms();
     this.initiateTablesCombo();
     this.refreshMappingsTable(dash.data.mappings);
-}
+};
+
+BadiliDash.prototype.clearMappings = function(){
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/clear_mappings/", dataType: 'json',
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            $('#clearMappingsModal').modal('hide');
+            if (data.error) {
+                swal({
+                  title: "Error!",
+                  text: data.message,
+                  imageUrl: "/static/img/error-icon.png"
+                });
+                return;
+            } else {
+                dash.showNotification('The mapping(s) were successful', 'success', true);
+                dash.refreshMappingsTable(data.mappings);
+            }
+        }
+    });
+};
 
 var dash = new BadiliDash();
