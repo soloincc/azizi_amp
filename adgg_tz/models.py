@@ -45,8 +45,8 @@ class Attribute(BaseTable):
 
 class ODKForm(BaseTable):
     # Define the structure of the form table
-    form_id = models.IntegerField(unique=True)
-    form_group = models.CharField(max_length=200, null=True)
+    form_id = models.IntegerField(unique=True, db_index=True)
+    form_group = models.CharField(max_length=200, null=True, db_index=True)
     form_name = models.CharField(max_length=200, unique=True)
     full_form_id = models.CharField(max_length=200, unique=True)
     structure = JSONField(null=True)
@@ -67,8 +67,9 @@ class ODKForm(BaseTable):
 class RawSubmissions(BaseTable):
     # Define the structure of the submission table
     form = models.ForeignKey(ODKForm)
-    uuid = models.CharField(max_length=100, unique=True)
+    uuid = models.CharField(max_length=100, unique=True, db_index=True)
     submission_time = models.CharField(max_length=100)
+    is_processed = models.BooleanField(default=0)
     raw_data = JSONField()
 
     class Meta:
@@ -84,8 +85,8 @@ class RawSubmissions(BaseTable):
 class FormViews(BaseTable):
     # Define the structure of the submission table
     form = models.ForeignKey(ODKForm)
-    view_name = models.CharField(max_length=100, unique=True)
-    proper_view_name = models.CharField(max_length=100)
+    view_name = models.CharField(max_length=100, unique=True, db_index=True)
+    proper_view_name = models.CharField(max_length=100, db_index=True)
     structure = JSONField()
 
     class Meta:
@@ -101,9 +102,9 @@ class FormViews(BaseTable):
 class ViewTablesLookup(BaseTable):
     # Define the structure of the views that will be generated
     view = models.ForeignKey(FormViews)
-    table_name = models.CharField(max_length=250, unique=True)
-    proper_table_name = models.CharField(max_length=250, null=True)
-    hashed_name = models.CharField(max_length=100, unique=True)
+    table_name = models.CharField(max_length=250, unique=True, db_index=True)
+    proper_table_name = models.CharField(max_length=250, null=True, db_index=True)
+    hashed_name = models.CharField(max_length=100, unique=True, db_index=True)
 
     class Meta:
         db_table = 'views_table_lookup'
@@ -132,7 +133,7 @@ class ViewsData(BaseTable):
 
 class ImagesLookup(models.Model):
     # Define the structure of the submission table
-    filename = models.CharField(max_length=50, unique=True)
+    filename = models.CharField(max_length=50, unique=True, db_index=True)
     species = models.CharField(max_length=50, null=True)
     breed = models.CharField(max_length=50, null=True)
     country = models.CharField(max_length=80, null=True)
@@ -150,9 +151,9 @@ class ImagesLookup(models.Model):
 class DictionaryItems(BaseTable):
     # define the dictionary structure
     form_id = models.IntegerField()
-    t_key = models.CharField(max_length=100)
+    t_key = models.CharField(max_length=100, db_index=True)
     t_locale = models.CharField(max_length=50)
-    t_type = models.CharField(max_length=30)
+    t_type = models.CharField(max_length=30, db_index=True)
     t_value = models.CharField(max_length=1000)
 
     class Meta:
@@ -168,14 +169,16 @@ class DictionaryItems(BaseTable):
 
 class FormMappings(BaseTable):
     # define the dictionary structure
-    form_group = models.CharField(max_length=50)
+    form_group = models.CharField(max_length=50, db_index=True)
     form_question = models.CharField(max_length=100)
-    dest_table_name = models.CharField(max_length=100)
-    dest_column_name = models.CharField(max_length=50)
+    dest_table_name = models.CharField(max_length=100, db_index=True)
+    dest_column_name = models.CharField(max_length=50, db_index=True)
     # @todo Add proper handling of choices like the enum in mysql
     odk_question_type = models.CharField(max_length=50)     # This will be, single_select, multiple_select, integer,
     db_question_type = models.CharField(max_length=50)     # This will be, single_select, multiple_select, integer,
     # @todo change this to a proper validator field
+    ref_table_name = models.CharField(max_length=100, null=True)
+    ref_column_name = models.CharField(max_length=50, null=True)
     validation_regex = models.CharField(max_length=100, null=True)
 
     class Meta:
@@ -191,7 +194,7 @@ class FormMappings(BaseTable):
 
 class DestinationTables(BaseTable):
     # define the dictionary structure
-    table_name = models.CharField(max_length=100, unique=True)
+    table_name = models.CharField(max_length=100, unique=True, db_index=True)
     # the order of the table in terms of processing. Tables with lower orders should be processed first
     table_order = models.IntegerField(default=0)
 

@@ -284,25 +284,33 @@ def manage_mappings(request):
     return render(request, 'manage_mappings.html', page_settings)
 
 
+def edit_mapping(request):
+    odk = OdkForms()
+    if (request.get_full_path() == '/edit_mapping/'):
+        response = odk.edit_mapping(request)
+
+    return HttpResponse(json.dumps(response))
+
+
 def create_mapping(request):
     odk = OdkForms()
     mappings = odk.save_mapping(request)
-    return return_mappings(mappings)
+    return return_json(mappings)
 
 
 def delete_mapping(request):
     odk = OdkForms()
     mappings = odk.delete_mapping(request)
-    return return_mappings(mappings)
+    return return_json(mappings)
 
 
 def clear_mappings(request):
     odk = OdkForms()
     mappings = odk.clear_mappings()
-    return return_mappings(mappings)
+    return return_json(mappings)
 
 
-def return_mappings(mappings):
+def return_json(mappings):
     to_return = json.dumps(mappings)
     response = HttpResponse(to_return, content_type='text/json')
     response['Content-Message'] = to_return
@@ -313,7 +321,14 @@ def validate_mappings(request):
     odk = OdkForms()
     (is_fully_mapped, is_mapping_valid, comments) = odk.validate_mappings()
 
-    to_return = json.dumps({'error': False, 'is_fully_mapped': is_fully_mapped, 'is_mapping_valid': is_mapping_valid, 'comments': comments})
-    response = HttpResponse(to_return, content_type='text/json')
-    response['Content-Message'] = to_return
-    return response
+    to_return = {'error': False, 'is_fully_mapped': is_fully_mapped, 'is_mapping_valid': is_mapping_valid, 'comments': comments}
+    return return_json(to_return)
+
+
+def manual_data_process(request):
+    odk = OdkForms()
+    is_dry_run = json.loads(request.POST['is_dry_run'])
+    (is_success, comments) = odk.manual_process_data(is_dry_run)
+
+    to_return = {'error': is_success, 'comments': comments}
+    return return_json(to_return)

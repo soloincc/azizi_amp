@@ -82,8 +82,8 @@
                     <div class='row table_actions ibox-tools'>
                         <button type="button" class="btn btn-outline btn-warning disabled" id='test_mappings'>Test Mappings</button>
                         <button type="button" class="btn btn-outline btn-info disabled" id='dry_run'>Data Dry Run</button>
-                        <button type="button" class="btn btn-outline btn-success" disabled>Execute Mappings</button>
-                        <button type="button" class="btn btn-outline btn-danger" disabled data-toggle="modal" data-target="#clearMappingsModal" id='clear_mappings'>Clear Mappings</button>
+                        <button type="button" class="btn btn-outline btn-success disabled" data-toggle="modal" data-target="#processMappingsModal" id='process_data'>Execute Mappings</button>
+                        <button type="button" class="btn btn-outline btn-danger disabled" data-toggle="modal" data-target="#clearMappingsModal" id='clear_mappings'>Clear Mappings</button>
                     </div>
                 </div>
                 <div class="ibox-content">
@@ -91,28 +91,28 @@
                     <table id="mappings_table" class="table" data-paging="true" data-filtering="true" data-sorting="true" data-editing="true" data-state="true"  data-paging="true"></table>
 
                     <!-- Editing Modal Markup -->
-                    <div class="modal fade" id="editor-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
+                    <div class="modal fade" id="mapping-modal" tabindex="-1" role="dialog" aria-labelledby="editor-title">
                         <style scoped>
                             
                         </style>
                         <div class="modal-dialog" role="document">
-                            <form class="modal-content form-horizontal" id="editor">
+                            <form class="modal-content form-horizontal" id="mapping_editor">
                                 <div class="modal-header">
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-                                    <h4 class="modal-title" id="editor-title">Edit a View</h4>
+                                    <h4 class="modal-title" id="editor-title">Edit a Mapping</h4>
                                 </div>
                                 <div class="modal-body">
-                                    <input type="number" id="view_id" name="view_id" class="hidden"/>
+                                    <input type="number" id="mapping_id" name="mapping_id" class="hidden"/>
                                     <div class="form-group required">
-                                        <label for="view_ame" class="col-sm-3 control-label">Regex Validator</label>
+                                        <label for="regex_validator" class="col-sm-3 control-label">Regex Validator</label>
                                         <div class="col-sm-9">
                                             <input type="text" class="form-control" id="regex_validator" name="regex_validator" placeholder="Regex" required>
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="auto_process" class="col-sm-3 control-label">Auto Process</label>
+                                        <label for="map_auto_process" class="col-sm-3 control-label">Auto Process</label>
                                         <div class="col-sm-9">
-                                            <select class="form-control" id="auto_process" name="auto_process">
+                                            <select class="form-control" id="map_auto_process" name="auto_process">
                                                 <option value="Yes">Yes</option>
                                                 <option value="No">No</option>
                                             </select>
@@ -145,6 +145,24 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
                 <button type="button" id='confirm_clear_mappings' class="btn btn-danger">Clear Mappings</button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<div class="modal inmodal" id="processMappingsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated bounceInRight">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title">Confirm Process Mappings</h4>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to process all the current mappings?  <strong>This action might take some time!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                <button type="button" id='confirm_process_mappings' class="btn btn-danger">Process Mappings</button>
             </div>
         </div>
     </div>

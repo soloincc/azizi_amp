@@ -34,4 +34,5 @@ body { margin: 0;   padding: 0;  min-width: 900px; }
 
 .table_actions{ margin-right: 15px; }
 
+#mapping_comments{max-height: 250px; overflow-y: scroll;}
 #mapping_comments .alert{ padding: 0px; }

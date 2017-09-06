@@ -127,6 +127,8 @@ function BadiliDash() {
     });
     $('#test_mappings').on('click', this.validateMappings);
     $('#confirm_clear_mappings').on('click', this.clearMappings);
+    $('#dry_run').on('click', this.executeProcessingDryRun);
+    $('#confirm_process_mappings').on('click', this.clearMappings);
 }
 
 BadiliDash.prototype.initiate = function(){
@@ -566,7 +568,6 @@ BadiliDash.prototype.submitViewEdits = function(e){
     if (this.checkValidity && !this.checkValidity()){
         return;
     }
-    console.log('Submiting edits');
     e.preventDefault();
     var row = $modal.data('row'),
         values = {
@@ -765,7 +766,7 @@ BadiliDash.prototype.finalizeMapping = function(dragItem, dropItem, a, position,
 
 BadiliDash.prototype.refreshMappingsTable = function(data){
     // create the grid with the views data
-    var $modal = $('#editor-modal'), $editor = $('#editor'), $editorTitle = $('#editor-title');
+    var $modal = $('#mapping-modal'), $editor = $('#mapping_editor'), $editorTitle = $('#editor-title');
     var ft;
     var columns = [
         {'name': 'mapping_id', 'title': 'ID', 'visible': false},
@@ -785,6 +786,7 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
         columns: columns,
         rows: data,
         editing: {
+            alwaysShow: true,
             editRow: function(row){
                 var values = row.val();
                 $editor.find('#mapping_id').val(values.mapping_id);
@@ -799,12 +801,43 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
     }),
     uid = 10001;
 
-    $editor.on('submit', dash.submitViewEdits);
+    $editor.on('submit', dash.submitMappingEdits);
     if(data.length != 0){
         $('#test_mappings').removeClass('disabled');
         $('#clear_mappings').removeClass('disabled');
     }
 };
+
+BadiliDash.prototype.submitMappingEdits = function(e){
+    var $modal = $('#mapping-modal'), $editor = $('#mapping_editor'), $editorTitle = $('#editor-title');
+    if (this.checkValidity && !this.checkValidity()){
+        return;
+    }
+    e.preventDefault();
+    var row = $modal.data('row'),
+        values = {
+            mapping_id: $editor.find('#mapping_id').val(),
+            regex_validator: $editor.find('#regex_validator').val(),
+            auto_process: $editor.find('#map_auto_process').val()
+        };
+
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/edit_mapping/", dataType: 'json', data: {'mapping': JSON.stringify(values)},
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            if (data.error) {
+                dash.showNotification(data.message, 'danger', true);
+                return;
+            }
+            else {
+                dash.refreshMappingsTable(data.mappings);
+            }
+        }
+    });
+    $modal.modal('hide');
+}
 
 BadiliDash.prototype.deleteMapping = function(row){
     if (confirm('Are you sure you want to delete this mapping?')){
@@ -881,7 +914,7 @@ BadiliDash.prototype.validateMappings = function(){
                 else{
                     message = '<div class="alert alert-success alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>The mappings are valid. No warning/comments</div>';
                 }
-                $('#mapping_comments').append(message);
+                $('#mapping_comments').html(message);
                 if(data.is_fully_mapped && data.is_mapping_valid){
                     $('#dry_run').removeClass('disabled');
                 }
@@ -914,6 +947,36 @@ BadiliDash.prototype.clearMappings = function(){
             } else {
                 dash.showNotification('The mapping(s) were successful', 'success', true);
                 dash.refreshMappingsTable(data.mappings);
+            }
+        }
+    });
+};
+
+BadiliDash.prototype.executeProcessingDryRun = function(){
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/manual_data_process/", dataType: 'json', data: {'is_dry_run': true},
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            $('#clearMappingsModal').modal('hide');
+            if (data.error) {
+                if (data.comments.length != 0){
+                    var message = '';
+                    $.each(data.comments, function(i, i_message){
+                        message += sprintf('<p class="alert text-%s">%s</p>', 'danger', i_message);
+                    });
+                    message = sprintf('<div class="alert alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>%s</div>', message);
+                }
+                else{
+                    message = '<div class="alert alert-success alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>The mappings are valid. No warning/comments</div>';
+                }
+                $('#mapping_comments').html(message);
+                dash.showNotification('The data processing dry ran failed', 'error', true);
+            } else {
+                $('#mapping_comments').html('');
+                dash.showNotification('The data processing dry ran was successful', 'success', true);
+                $('#process_data').removeClass('disabled');
             }
         }
     });

@@ -11,9 +11,9 @@ from django.forms.models import model_to_dict
 from datetime import datetime
 from django.http import HttpResponse
 from django.http import HttpRequest
+from collections import defaultdict
 
-from django.db import connection
-from django.db import connections
+from django.db import connection, connections, transaction, IntegrityError
 
 from terminal_output import Terminal
 from excel_writer import ExcelWriter
@@ -993,26 +993,57 @@ class OdkForms():
         '''
         data = json.loads(request.body)
         # get the form metadata
-        settings = ConfigParser()
-        settings.read(self.forms_settings)
+        config_settings = ConfigParser()
+        config_settings.read(self.forms_settings)
 
         try:
-            cur_form_group = settings.get('id_' + str(data['form']['id']), 'form_group')
+            cur_form_group = config_settings.get('id_' + str(data['form']['id']), 'form_group')
+            # Check if it a foreign key
+            is_foreign_key = self.foreign_key_check(settings.DATABASES['mapped']['NAME'], data['table']['title'], data['drop_item']['title'])
+            if is_foreign_key is not False and is_foreign_key[0] is not None:
+                ref_table_name = is_foreign_key[1]
+                ref_column_name = is_foreign_key[2]
+            else:
+                ref_table_name = None
+                ref_column_name = None
+
+            mapping = FormMappings(
+                form_group=cur_form_group,
+                form_question=data['table_item']['name'],
+                dest_table_name=data['table']['title'],
+                dest_column_name=data['drop_item']['title'],
+                odk_question_type=data['table_item']['type'],
+                db_question_type=data['drop_item']['type'],
+                ref_table_name=ref_table_name,
+                ref_column_name=ref_column_name
+            )
+            mapping.publish()
         except Exception as e:
             return {'error': True, 'message': str(e)}
 
-        mapping = FormMappings(
-            form_group=cur_form_group,
-            form_question=data['table_item']['name'],
-            dest_table_name=data['table']['title'],
-            dest_column_name=data['drop_item']['title'],
-            odk_question_type=data['table_item']['type'],
-            db_question_type=data['drop_item']['type']
-        )
-        mapping.publish()
-
         mappings = self.mapping_info()
         return {'error': False, 'mappings': mappings}
+
+    def edit_mapping(self, request):
+        try:
+            mapping = json.loads(request.POST['mapping'])
+            # delete the actual view itself
+            cur_mapping = FormMappings.objects.get(id=mapping['mapping_id'])
+            if mapping['regex_validator'] is not None:
+                try:
+                    re.compile(mapping['regex_validator'])
+                except re.error:
+                    return {'error': True, 'message': 'The specified REGEX is not valid!'}
+
+            cur_mapping.validation_regex = mapping['regex_validator']
+            cur_mapping.publish()
+            mappings = self.mapping_info()
+
+            return {'error': False, 'message': 'The mapping was updated successfully', 'mappings': mappings}
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.info(str(e))
+            return {'error': True, 'message': str(e)}
 
     def mapping_info(self):
         all_mappings = FormMappings.objects.all().order_by('dest_table_name').order_by('dest_column_name')
@@ -1063,7 +1094,7 @@ class OdkForms():
         Validate the mappings and ensure all mandatory fields have been mapped
         '''
         # get all the mapped tables
-        mapped_tables = FormMappings.objects.values('dest_table_name').distinct()
+        mapped_tables = list(FormMappings.objects.values('dest_table_name').distinct())
         is_fully_mapped = True
         is_mapping_valid = True
         comments = []
@@ -1155,6 +1186,238 @@ class OdkForms():
             for table in tables:
                 dest_table = FormMappings(table_name=table)
                 dest_table.publish()
+
+    def manual_process_data(self, is_dry_run):
+        # initiate the process of manually processing the data
+        # 1. Get the form groups involved in the mapping
+        # 2. For each form group, get all the tables which have been mapped
+        # 2. Get the raw submissions and try and save the data to the destination tables
+        form_groups = list(FormMappings.objects.values('form_group').distinct())
+        top_error = False
+        all_comments = []
+
+        for form_group in form_groups:
+            self.cur_group_queries = {}
+            tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
+            for table in tables:
+                try:
+                    self.generate_table_query(form_group['form_group'], table['dest_table_name'], None, None)
+                except Exception as e:
+                    terminal.tprint('\t%s' % str(e), 'fail')
+
+            try:
+                # terminal.tprint(json.dumps(self.cur_group_queries), 'warn')
+                (is_error, comments) = self.process_form_group_data(form_group['form_group'], is_dry_run)
+                all_comments = copy.deepcopy(all_comments) + copy.deepcopy(comments)
+                top_error = top_error or is_error
+            except Exception as e:
+                terminal.tprint('\t%s' % str(e), 'fail')
+                top_error = top_error or True
+                all_comments.append(str(e))
+
+        return top_error, all_comments
+
+    def generate_table_query(self, form_group, table, ref_table, ref_column):
+        if table in self.cur_group_queries:
+            terminal.tprint("\tThe query for the table %s has already been generated, skipping it..." % table, 'okblue')
+            return False
+
+        terminal.tprint("\tGenerating %s's (%s group) query" % (table, form_group), 'warn')
+        insert_query = "INSERT INTO %s" % table
+        column_names = ''
+        column_values = ''
+        mappings = list(FormMappings.objects.filter(form_group=form_group).filter(dest_table_name=table).values())
+        mapped_columns = []
+        source_datapoints = []
+
+        self.cur_group_queries[table] = defaultdict(dict)
+        self.cur_group_queries[table]['columns'] = defaultdict(dict)
+
+        for mapping in mappings:
+            if mapping['dest_column_name'] in mapped_columns:
+                # we have a scenario where 2 data
+                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['has_multiple_sources'] = True
+                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['sources'].append(mapping['form_question'])
+                continue
+
+            if mapping['odk_question_type'] == 'geopoint':
+                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['is_geopoint'] = True
+
+            if mapping['ref_table_name'] is not None:
+                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['is_foreign_key'] = True
+                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['ref_table_name'] = mapping['ref_table_name']
+                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['ref_column_name'] = mapping['ref_column_name']
+
+            if mapping['validation_regex'] is not None:
+                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['regex'] = mapping['validation_regex']
+
+            if mapping['ref_table_name'] is not None and table != mapping['dest_table_name']:
+                # this table should be populated before the current table
+                self.generate_table_query(form_group, mapping['dest_table_name'], table, mapping['dest_column_name'])
+
+            if column_names == '':
+                column_names = mapping['dest_column_name']
+                column_values = "'%s'"
+            else:
+                column_names = "%s, %s" % (column_names, mapping['dest_column_name'])
+                column_values = "%s, '%%s'" % column_values
+
+            mapped_columns.append(mapping['dest_column_name'])
+            source_datapoints.append(mapping['form_question'])
+            self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['sources'] = [mapping['form_question']]
+
+        final_query = '%s(%s) VALUES(%s)' % (insert_query, column_names, column_values)
+        self.cur_group_queries[table]['query'] = final_query
+        self.cur_group_queries[table]['source_datapoints'] = source_datapoints
+        self.cur_group_queries[table]['dest_columns'] = mapped_columns
+        terminal.tprint('\tGenerated query for %s: %s' % (table, final_query), 'ok')
+
+        return False
+
+    def process_form_group_data(self, form_group, is_dry_run):
+        comments = []
+        # get the data belonging to this form group
+        if is_dry_run:
+            limit_part = 'LIMIT %d' % settings.DRY_RUN_RECORDS
+        else:
+            limit_part = ''
+
+        is_error = False
+
+        form_group_data_q = '''
+            SELECT b.uuid, b.raw_data
+            FROM odkform as a INNER JOIN raw_submissions as b on a.id=b.form_id
+            WHERE a.form_group = '%s'
+            %s
+        ''' % (form_group, limit_part)
+        with connection.cursor() as cursor:
+            cursor.execute(form_group_data_q)
+            form_group_data = cursor.fetchall()
+            with connections['mapped'].cursor():
+                # start a transaction
+                transaction.set_autocommit(False)
+                for instance in form_group_data:
+                    try:
+                        self.save_instance_data(instance)
+                    except IntegrityError as e:
+                        terminal.tprint('Integrity Error: %s' % str(e), 'fail')
+                        comments.append('Integrity Error: %s' % str(e))
+                        is_error = True
+                    except Exception as e:
+                        terminal.tprint('Error: %s' % str(e), 'fail')
+                        comments.append('Error: %s' % str(e))
+                        is_error = True
+
+                if is_dry_run:
+                    transaction.rollback()
+                else:
+                    transaction.commit()
+
+        return is_error, comments
+
+    def save_instance_data(self, data):
+        # start the process of saving this instance data
+        # the output_structure is required by the process_node function, but we are not using it here, just keep it
+        self.output_structure = {'misc': ['unique_id']}
+        self.cur_fk = {}
+        for table, cur_group in self.cur_group_queries.iteritems():
+            # terminal.tprint('\t%s' % json.dumps(cur_group), 'okblue')
+            self.cur_fk[table] = []
+            nodes_data = self.process_node(json.loads(data[1]), 'misc', cur_group['source_datapoints'], False)
+
+            data_points = self.populate_query(cur_group, nodes_data)
+            final_query = cur_group['query'] % tuple(data_points)
+            terminal.tprint('\tExecuting the final query: %s' % final_query, 'okblue')
+
+            # now lets execute our query
+            cursor = connections['mapped'].cursor()
+            cursor.execute(final_query)
+            cursor.execute('SELECT @@IDENTITY')
+            last_insert_id = int(cursor.fetchone()[0])
+            self.cur_fk[table].append(last_insert_id)
+
+            # having the different pieces, now lets fill in our query
+        return {}
+
+    def populate_query(self, q_meta, q_data):
+        data_points = []
+        for col in q_meta['dest_columns']:
+            # get the source node details
+            source_node = q_meta['columns'][col]
+            is_foreign_key = True if 'is_foreign_key' in source_node and source_node['is_foreign_key'] else False
+            node_data = None
+
+            if 'has_multiple_sources' in source_node and 'is_foreign_key' not in source_node:
+                node_data = self.process_muliple_source_node(col, source_node, q_data)
+            elif 'regex' in source_node:
+                # the data is only coming from one source and we have a regex defined
+                self.validate_data_point(source_node['regex'], q_data[source_node['sources'][0]], source_node['sources'][0])
+
+            if 'is_geopoint' in source_node:
+                node_data = self.process_geopoint_node(col, source_node['sources'], q_data)
+            if is_foreign_key:
+                # we need to get the foreign key to this. It must have been processed and saved already
+                if len(self.cur_fk[source_node['ref_table_name']]) == 1:
+                    # this is definately the foreign key
+                    node_data = self.cur_fk[source_node['ref_table_name']][0]
+                else:
+                    terminal.tprint(json.dumps(self.cur_fk[source_node['ref_table_name']]), 'fail')
+                    raise Exception('Ambigous Foreign Key: I have more than 1 FK to use. I dont know how to proceed')
+
+            if node_data is None:
+                # we still dont have the node data, so it must be coming from a single source, nothing special
+                node_data = q_data[source_node['sources'][0]]
+
+            data_points.append(node_data)
+
+        # terminal.tprint('\tData points are: %s' % json.dumps(data_points), 'okblue')
+        return data_points
+
+    def process_muliple_source_node(self, column, source_node, q_data):
+        # the given multiple input data sources is to be saved to a single column
+        terminal.tprint("\tProcessing column '%s' which has multiple data sources" % column, 'debug')
+        nodes_present = 0
+        node_data = ''
+        for source in source_node['sources']:
+            if source in q_data:
+                if 'regex' in source_node:
+                    self.validate_data_point(source_node['regex'], q_data[source], column)
+                nodes_present += 1
+                if node_data == '':
+                    node_data = q_data[source]
+                else:
+                    node_data = '%s, %s' % (node_data, q_data[source])
+
+        return node_data
+
+    def process_geopoint_node(self, column, sources, q_data):
+        # expecting the source to be only one
+        if len(sources) != 1:
+            raise Exception("Invalid Mapping: The GPS source data can only be fetched from one source question.")
+
+        # split the data by a space as expected from odk
+        geo = q_data[sources[0]].split()
+
+        # try some guessing game which column we are referring to
+        if re.search('lat', column):
+            # we have a longitude
+            return geo[0]
+        if re.search('lon', column):
+            # we have a longitude
+            return geo[1]
+        if re.search('alt', column):
+            # we have a longitude
+            return geo[2]
+
+        raise Exception('Unknown Destination Column: Encountered a GPS data field (%s), but I cant seem to deduce which type(latitude, longitude, altitude) the current column (%s) is.' % (q_data[sources[0]], column))
+
+    def validate_data_point(self, regex, data, column):
+        try:
+            m = re.search(r'%s' % regex, data)
+            if m is None:
+                raise Exception("Invalid Data - Column '%s': Found '%s' which does not match the validation criteria '%s' defined" % (column, data, regex))
+        except Exception as e:
+            raise Exception(str(e))
 
 
 def auto_process_submissions():
