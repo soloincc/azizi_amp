@@ -45,4 +45,5 @@ urlpatterns = [
     url(r'^validate_mappings/$', views.validate_mappings, name='validate_mappings'),
     url(r'^clear_mappings/$', views.clear_mappings, name='clear_mappings'),
     url(r'^manual_data_process/$', views.manual_data_process, name='manual_data_process'),
+    url(r'^delete_processed_data/$', views.delete_processed_data, name='delete_processed_data'),
 ]

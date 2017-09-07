@@ -128,7 +128,8 @@ function BadiliDash() {
     $('#test_mappings').on('click', this.validateMappings);
     $('#confirm_clear_mappings').on('click', this.clearMappings);
     $('#dry_run').on('click', this.executeProcessingDryRun);
-    $('#confirm_process_mappings').on('click', this.clearMappings);
+    $('#confirm_process_mappings').on('click', this.executeDataProcessor);
+    $('#confirm_delete_data').on('click', this.clearProcessedData)
 }
 
 BadiliDash.prototype.initiate = function(){
@@ -779,29 +780,39 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
         {'name': 'dest_column_name', 'title': 'Dest Column'},
         {'name': 'db_question_type', 'title': 'Dest Type'},
         {'name': 'validation_regex', 'title': 'Validation REGEX'},
+        {'name': 'is_record_identifier', 'title': 'Is Identifier'},
         // {'name': 'structure', 'title': 'View Structure'}
     ];
 
-    dash.ft = FooTable.init('#mappings_table', {
-        columns: columns,
-        rows: data,
-        editing: {
-            alwaysShow: true,
-            editRow: function(row){
-                var values = row.val();
-                $editor.find('#mapping_id').val(values.mapping_id);
-                $editor.find('#regex_validator').val(values.validation_regex);
-                $editor.find('#auto_process').val(1);
-                $modal.data('row', row);
-                $editorTitle.text('Add Validator');
-                $modal.modal('show');
-            },
-            deleteRow: dash.deleteMapping
-        }
-    }),
-    uid = 10001;
-
-    $editor.on('submit', dash.submitMappingEdits);
+    if(dash.ft == undefined){
+        dash.ft = FooTable.init('#mappings_table', {
+            columns: columns,
+            rows: data,
+            editing: {
+                alwaysShow: true,
+                editRow: function(row){
+                    var values = row.val();
+                    $editor.find('#mapping_id').val(values.mapping_id);
+                    $editor.find('#regex_validator').val(values.validation_regex);
+                    if (values.is_record_identifier == true){
+                        $editor.find('#is_record_id_yes').prop('checked', true);
+                    }
+                    else{
+                        $editor.find('#is_record_id_no').prop('checked', true);
+                    }
+                    $modal.data('row', row);
+                    $editorTitle.text(sprintf('Add validator for %s - %s', values.form_question, values.dest_column_name ));
+                    $modal.modal('show');
+                },
+                deleteRow: dash.deleteMapping
+            }
+        }),
+        uid = 10001;
+        $editor.on('submit', dash.submitMappingEdits);
+    }
+    else{
+        dash.ft.rows.load(data);
+    }
     if(data.length != 0){
         $('#test_mappings').removeClass('disabled');
         $('#clear_mappings').removeClass('disabled');
@@ -818,7 +829,7 @@ BadiliDash.prototype.submitMappingEdits = function(e){
         values = {
             mapping_id: $editor.find('#mapping_id').val(),
             regex_validator: $editor.find('#regex_validator').val(),
-            auto_process: $editor.find('#map_auto_process').val()
+            is_record_id: $editor.find('[name=is_record_id]').val() == 'yes' ? true : false
         };
 
     $('#spinnermModal').modal('show');
@@ -952,25 +963,25 @@ BadiliDash.prototype.clearMappings = function(){
     });
 };
 
-BadiliDash.prototype.executeProcessingDryRun = function(){
+BadiliDash.prototype.executeDataProcessor = function(){
+    dash.executeProcessingDryRun(false);
+};
+
+BadiliDash.prototype.executeProcessingDryRun = function(is_dry_run=true){
     $('#spinnermModal').modal('show');
+    if(is_dry_run == false){
+        $('#clearMappingsModal').modal('hide');
+        $('#processMappingsModal').modal('hide');
+    }
     $.ajax({
-        type: "POST", url: "/manual_data_process/", dataType: 'json', data: {'is_dry_run': true},
+        type: "POST", url: "/manual_data_process/", dataType: 'json', data: {'is_dry_run': is_dry_run},
         error: dash.communicationError,
         success: function (data) {
             $('#spinnermModal').modal('hide');
             $('#clearMappingsModal').modal('hide');
+            $('#processMappingsModal').modal('hide');
             if (data.error) {
-                if (data.comments.length != 0){
-                    var message = '';
-                    $.each(data.comments, function(i, i_message){
-                        message += sprintf('<p class="alert text-%s">%s</p>', 'danger', i_message);
-                    });
-                    message = sprintf('<div class="alert alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>%s</div>', message);
-                }
-                else{
-                    message = '<div class="alert alert-success alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>The mappings are valid. No warning/comments</div>';
-                }
+                message = dash.formatErrorMessages(data.comments);
                 $('#mapping_comments').html(message);
                 dash.showNotification('The data processing dry ran failed', 'error', true);
             } else {
@@ -980,6 +991,40 @@ BadiliDash.prototype.executeProcessingDryRun = function(){
             }
         }
     });
+};
+
+BadiliDash.prototype.clearProcessedData = function(){
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/delete_processed_data/", dataType: 'json',
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            $('#deleteDataModal').modal('hide');
+            if (data.error) {
+                message = dash.formatErrorMessages(data.comments);
+                $('#mapping_comments').html(message);
+                dash.showNotification('The data truncation process failed', 'error', true);
+            } else {
+                dash.showNotification('The processed data was deleted successfully!', 'success', true);
+                $('#mapping_comments').html('');
+            }
+        }
+    });
+};
+
+BadiliDash.prototype.formatErrorMessages = function(comments){
+    if (comments.length != 0){
+        var message = '';
+        $.each(comments, function(i, i_message){
+            message += sprintf('<p class="alert text-%s">%s</p>', 'danger', i_message);
+        });
+        message = sprintf('<div class="alert alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>%s</div>', message);
+    }
+    else{
+        message = '<div class="alert alert-success alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>The mappings are valid. No warning/comments</div>';
+    }
+    return message;
 };
 
 var dash = new BadiliDash();

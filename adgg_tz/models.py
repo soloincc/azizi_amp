@@ -180,6 +180,7 @@ class FormMappings(BaseTable):
     ref_table_name = models.CharField(max_length=100, null=True)
     ref_column_name = models.CharField(max_length=50, null=True)
     validation_regex = models.CharField(max_length=100, null=True)
+    is_record_identifier = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('form_group', 'form_question', 'dest_table_name', 'dest_column_name')
@@ -192,17 +193,21 @@ class FormMappings(BaseTable):
         return self.t_key
 
 
-class DestinationTables(BaseTable):
+class ProcessingErrors(BaseTable):
     # define the dictionary structure
-    table_name = models.CharField(max_length=100, unique=True, db_index=True)
-    # the order of the table in terms of processing. Tables with lower orders should be processed first
-    table_order = models.IntegerField(default=0)
+    err_code = models.IntegerField(db_index=True)
+    err_message = models.TextField()
+    data_uuid = models.CharField(max_length=100, db_index=True)
+    err_comments = models.CharField(max_length=1000, null=True)
+    is_resolved = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'destination_tables'
+        # unique_together = ('form_group', 'form_question', 'dest_table_name', 'dest_column_name')
+        db_table = 'processing_errors'
 
     def publish(self):
         self.save()
 
     def get_id(self):
         return self.t_key
+

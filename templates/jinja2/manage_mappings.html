@@ -80,10 +80,11 @@
                 <div class="ibox-title">
                     <h5>Saved Mappings</h5>
                     <div class='row table_actions ibox-tools'>
-                        <button type="button" class="btn btn-outline btn-warning disabled" id='test_mappings'>Test Mappings</button>
-                        <button type="button" class="btn btn-outline btn-info disabled" id='dry_run'>Data Dry Run</button>
-                        <button type="button" class="btn btn-outline btn-success disabled" data-toggle="modal" data-target="#processMappingsModal" id='process_data'>Execute Mappings</button>
-                        <button type="button" class="btn btn-outline btn-danger disabled" data-toggle="modal" data-target="#clearMappingsModal" id='clear_mappings'>Clear Mappings</button>
+                        <button type="button" class="btn btn-outline btn-warning" id='test_mappings'>Test Mappings</button>
+                        <button type="button" class="btn btn-outline btn-info" id='dry_run'>Data Dry Run</button>
+                        <button type="button" class="btn btn-outline btn-success" data-toggle="modal" data-target="#processMappingsModal" id='process_data'>Execute Mappings</button>
+                        <button type="button" class="btn btn-outline btn-warning" data-toggle="modal" data-target="#clearMappingsModal" id='clear_mappings'>Clear Mappings</button>
+                        <button type="button" class="btn btn-outline btn-danger" data-toggle="modal" data-target="#deleteDataModal" id='clear_mappings'>Delete Processed Data</button>
                     </div>
                 </div>
                 <div class="ibox-content">
@@ -103,19 +104,17 @@
                                 </div>
                                 <div class="modal-body">
                                     <input type="number" id="mapping_id" name="mapping_id" class="hidden"/>
-                                    <div class="form-group required">
-                                        <label for="regex_validator" class="col-sm-3 control-label">Regex Validator</label>
-                                        <div class="col-sm-9">
-                                            <input type="text" class="form-control" id="regex_validator" name="regex_validator" placeholder="Regex" required>
+                                    <div class="form-group">
+                                        <label for="regex_validator" class="col-sm-4 control-label">Regex Validator</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" id="regex_validator" name="regex_validator" placeholder="Regex">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="map_auto_process" class="col-sm-3 control-label">Auto Process</label>
-                                        <div class="col-sm-9">
-                                            <select class="form-control" id="map_auto_process" name="auto_process">
-                                                <option value="Yes">Yes</option>
-                                                <option value="No">No</option>
-                                            </select>
+                                        <label for="map_auto_process" class="col-sm-4 control-label">Is record identifier</label>
+                                        <div class="col-sm-8">
+                                            <input type="radio" name="is_record_id" id="is_record_id_yes" value='yes'>Yes
+                                            <input type="radio" name="is_record_id" id="is_record_id_no" value='no'>No
                                         </div>
                                     </div>
                                 </div>
@@ -162,7 +161,25 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
-                <button type="button" id='confirm_process_mappings' class="btn btn-danger">Process Mappings</button>
+                <button type="button" id='confirm_process_mappings' class="btn btn-success">Process Mappings</button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<div class="modal inmodal" id="deleteDataModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content animated bounceInRight">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title">Confirm Delete Processed Data</h4>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to DELETE the processed data?  <strong>You will be forced to start from scratch again!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                <button type="button" id='confirm_delete_data' class="btn btn-danger">Delete Data</button>
             </div>
         </div>
     </div>

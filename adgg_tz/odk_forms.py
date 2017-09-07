@@ -17,7 +17,7 @@ from django.db import connection, connections, transaction, IntegrityError
 
 from terminal_output import Terminal
 from excel_writer import ExcelWriter
-from models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLookup, DictionaryItems, FormMappings
+from models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLookup, DictionaryItems, FormMappings, ProcessingErrors
 from sql import Query
 
 terminal = Terminal()
@@ -1035,7 +1035,11 @@ class OdkForms():
                 except re.error:
                     return {'error': True, 'message': 'The specified REGEX is not valid!'}
 
-            cur_mapping.validation_regex = mapping['regex_validator']
+                cur_mapping.validation_regex = mapping['regex_validator']
+
+            if mapping['is_record_id'] is not None:
+                cur_mapping.is_record_identifier = mapping['is_record_id']
+
             cur_mapping.publish()
             mappings = self.mapping_info()
 
@@ -1113,6 +1117,7 @@ class OdkForms():
         is_mapping_valid = True
         mapped_columns = FormMappings.objects.filter(dest_table_name=table)
         all_mapped_columns = {}
+        has_primary_key = False
         for col in mapped_columns:
             all_mapped_columns[col.dest_column_name] = model_to_dict(col)
 
@@ -1126,9 +1131,11 @@ class OdkForms():
                 # check if the column in mandatory and is included in the mapping
                 if dest_column[2] == 'NO':
                     # check if it is a primary key
-                    if dest_column[3] == 'PRI' and dest_column[5] == 'auto_increment':
-                        # its a primary key and auto incrementing, so skip it
-                        continue
+                    if dest_column[3] == 'PRI':
+                        has_primary_key = True
+                        if dest_column[5] == 'auto_increment':
+                            # its a primary key and auto incrementing, so skip it
+                            continue
                     if dest_column[0] not in all_mapped_columns:
                         # check if we have a default value
                         if dest_column[4] is not None:
@@ -1156,6 +1163,10 @@ class OdkForms():
                     if not is_table_mapping_valid:
                         comments.append({'type': 'danger', 'message': "REFERENTIAL INTEGRITY FAIL: The referenced table '%s' mapping is not valid." % is_foreign_key[1]})
                         is_mapping_valid = False
+
+            if has_primary_key is False:
+                comments.append({'type': 'danger', 'message': "The referenced table '%s' doesn't have a primary key defined. I wont be able to process the data." % is_foreign_key[1]})
+                is_mapping_valid = False
 
         return is_fully_mapped, is_mapping_valid, comments
 
@@ -1195,6 +1206,7 @@ class OdkForms():
         form_groups = list(FormMappings.objects.values('form_group').distinct())
         top_error = False
         all_comments = []
+        print is_dry_run
 
         for form_group in form_groups:
             self.cur_group_queries = {}
@@ -1204,7 +1216,10 @@ class OdkForms():
                     self.generate_table_query(form_group['form_group'], table['dest_table_name'], None, None)
                 except Exception as e:
                     terminal.tprint('\t%s' % str(e), 'fail')
+                    top_error = top_error or True
+                    all_comments.append(str(e))
 
+            terminal.tprint('\t%s' % json.dumps(self.cur_group_queries), 'warn')
             try:
                 # terminal.tprint(json.dumps(self.cur_group_queries), 'warn')
                 (is_error, comments) = self.process_form_group_data(form_group['form_group'], is_dry_run)
@@ -1223,15 +1238,23 @@ class OdkForms():
             return False
 
         terminal.tprint("\tGenerating %s's (%s group) query" % (table, form_group), 'warn')
+        # get the table primary key
+        primary_key = self.get_table_primary_key(table)
+        if primary_key is None:
+            raise Exception("Invalid Destination Table: The table '%s' does not have a defined primary key. I can't continue" % table)
+
         insert_query = "INSERT INTO %s" % table
         column_names = ''
         column_values = ''
+        duplicate_constraints = ''
         mappings = list(FormMappings.objects.filter(form_group=form_group).filter(dest_table_name=table).values())
         mapped_columns = []
+        dup_columns_sources = []
         source_datapoints = []
 
         self.cur_group_queries[table] = defaultdict(dict)
         self.cur_group_queries[table]['columns'] = defaultdict(dict)
+        self.cur_group_queries[table]['dup_check'] = defaultdict(dict)
 
         for mapping in mappings:
             if mapping['dest_column_name'] in mapped_columns:
@@ -1251,6 +1274,11 @@ class OdkForms():
             if mapping['validation_regex'] is not None:
                 self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['regex'] = mapping['validation_regex']
 
+            if mapping['is_record_identifier']:
+                dc = "%s='%%s'" % mapping['dest_column_name']
+                duplicate_constraints = dc if duplicate_constraints == '' else '%s and %s' % (duplicate_constraints, dc)
+                dup_columns_sources.append(mapping['dest_column_name'])
+
             if mapping['ref_table_name'] is not None and table != mapping['dest_table_name']:
                 # this table should be populated before the current table
                 self.generate_table_query(form_group, mapping['dest_table_name'], table, mapping['dest_column_name'])
@@ -1267,7 +1295,10 @@ class OdkForms():
             self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['sources'] = [mapping['form_question']]
 
         final_query = '%s(%s) VALUES(%s)' % (insert_query, column_names, column_values)
+        is_duplicate_query = 'SELECT %s FROM %s WHERE %s' % (primary_key, table, duplicate_constraints)
         self.cur_group_queries[table]['query'] = final_query
+        self.cur_group_queries[table]['dup_check']['is_duplicate_query'] = is_duplicate_query
+        self.cur_group_queries[table]['dup_check']['dup_columns_sources'] = dup_columns_sources
         self.cur_group_queries[table]['source_datapoints'] = source_datapoints
         self.cur_group_queries[table]['dest_columns'] = mapped_columns
         terminal.tprint('\tGenerated query for %s: %s' % (table, final_query), 'ok')
@@ -1295,10 +1326,10 @@ class OdkForms():
             form_group_data = cursor.fetchall()
             with connections['mapped'].cursor():
                 # start a transaction
-                transaction.set_autocommit(False)
                 for instance in form_group_data:
+                    transaction.set_autocommit(False)
                     try:
-                        self.save_instance_data(instance)
+                        self.save_instance_data(instance, is_dry_run)
                     except IntegrityError as e:
                         terminal.tprint('Integrity Error: %s' % str(e), 'fail')
                         comments.append('Integrity Error: %s' % str(e))
@@ -1308,14 +1339,14 @@ class OdkForms():
                         comments.append('Error: %s' % str(e))
                         is_error = True
 
-                if is_dry_run:
-                    transaction.rollback()
-                else:
-                    transaction.commit()
+                    if is_dry_run:
+                        transaction.rollback()
+                    else:
+                        transaction.commit()
 
         return is_error, comments
 
-    def save_instance_data(self, data):
+    def save_instance_data(self, data, is_dry_run):
         # start the process of saving this instance data
         # the output_structure is required by the process_node function, but we are not using it here, just keep it
         self.output_structure = {'misc': ['unique_id']}
@@ -1323,24 +1354,49 @@ class OdkForms():
         for table, cur_group in self.cur_group_queries.iteritems():
             # terminal.tprint('\t%s' % json.dumps(cur_group), 'okblue')
             self.cur_fk[table] = []
-            nodes_data = self.process_node(json.loads(data[1]), 'misc', cur_group['source_datapoints'], False)
+            # terminal.tprint('\t%s' % data[1], 'okblue')
+            nodes = cur_group['source_datapoints']
+            nodes.append('instanceID')
+            nodes_data = self.process_node(json.loads(data[1]), 'misc', nodes, False)
+            # terminal.tprint('\t%s' % json.dumps(nodes_data), 'ok')
 
-            data_points = self.populate_query(cur_group, nodes_data)
+            try:
+                (data_points, dup_data_points) = self.populate_query(cur_group, nodes_data)
+            except ValueError as e:
+                self.create_error_log_entry('data_error', str(e), nodes_data['instanceID'], None)
+                continue
+            except Exception:
+                raise
             final_query = cur_group['query'] % tuple(data_points)
-            terminal.tprint('\tExecuting the final query: %s' % final_query, 'okblue')
+            # terminal.tprint('\t%s' % json.dumps(dup_data_points), 'ok')
+            # terminal.tprint('\t%s' % json.dumps(data_points), 'warn')
+            duplicate_query = cur_group['dup_check']['is_duplicate_query'] % tuple(dup_data_points)
 
             # now lets execute our query
             cursor = connections['mapped'].cursor()
-            cursor.execute(final_query)
-            cursor.execute('SELECT @@IDENTITY')
-            last_insert_id = int(cursor.fetchone()[0])
-            self.cur_fk[table].append(last_insert_id)
+            try:
+                cursor.execute(final_query)
+                cursor.execute('SELECT @@IDENTITY')
+                last_insert_id = int(cursor.fetchone()[0])
+                self.cur_fk[table].append(last_insert_id)
+            except IntegrityError as e:
+                # it seems we have a duplicate entry, check if it is already saved
+                # terminal.tprint('\tExecuting the duplicate query: %s' % duplicate_query, 'okblue')
+                cursor.execute(duplicate_query)
+                inserted_data = cursor.fetchone()
+                if inserted_data is None:
+                    # We have a real duplicate data, this is not a logic error but a problem with the source data
+                    self.create_error_log_entry('duplicate', str(e), nodes_data['instanceID'], duplicate_query)
+                    continue
+                self.cur_fk[table].append(inserted_data[0])
+            except Exception as e:
+                raise
 
-            # having the different pieces, now lets fill in our query
-        return {}
+        return
 
     def populate_query(self, q_meta, q_data):
         data_points = []
+        dup_data_points = []
         for col in q_meta['dest_columns']:
             # get the source node details
             source_node = q_meta['columns'][col]
@@ -1357,25 +1413,30 @@ class OdkForms():
                 node_data = self.process_geopoint_node(col, source_node['sources'], q_data)
             if is_foreign_key:
                 # we need to get the foreign key to this. It must have been processed and saved already
+                if len(self.cur_fk[source_node['ref_table_name']]) == 0:
+                    raise ValueError("Missing Foreign Key: I don't have a FK to use for table '%s', column '%s'" % (source_node['ref_table_name'], col))
                 if len(self.cur_fk[source_node['ref_table_name']]) == 1:
                     # this is definately the foreign key
                     node_data = self.cur_fk[source_node['ref_table_name']][0]
                 else:
                     terminal.tprint(json.dumps(self.cur_fk[source_node['ref_table_name']]), 'fail')
-                    raise Exception('Ambigous Foreign Key: I have more than 1 FK to use. I dont know how to proceed')
+                    raise ValueError('Ambigous Foreign Key: I have more than 1 FK to use. I dont know how to proceed')
 
             if node_data is None:
                 # we still dont have the node data, so it must be coming from a single source, nothing special
                 node_data = q_data[source_node['sources'][0]]
 
+            # Append the found node data
             data_points.append(node_data)
+            if col in q_meta['dup_check']['dup_columns_sources']:
+                dup_data_points.append(node_data)
 
         # terminal.tprint('\tData points are: %s' % json.dumps(data_points), 'okblue')
-        return data_points
+        return data_points, dup_data_points
 
     def process_muliple_source_node(self, column, source_node, q_data):
         # the given multiple input data sources is to be saved to a single column
-        terminal.tprint("\tProcessing column '%s' which has multiple data sources" % column, 'debug')
+        # terminal.tprint("\tProcessing column '%s' which has multiple data sources" % column, 'debug')
         nodes_present = 0
         node_data = ''
         for source in source_node['sources']:
@@ -1415,9 +1476,81 @@ class OdkForms():
         try:
             m = re.search(r'%s' % regex, data)
             if m is None:
-                raise Exception("Invalid Data - Column '%s': Found '%s' which does not match the validation criteria '%s' defined" % (column, data, regex))
+                raise ValueError("Invalid Data - Column '%s': Found '%s' which does not match the validation criteria '%s' defined" % (column, data, regex))
+        except Exception:
+            raise
+
+    def delete_processed_data(self):
+        form_groups = list(FormMappings.objects.values('form_group').distinct())
+        top_error = False
+        all_comments = []
+
+        # disable foreign key checks
+        cursor = connections['mapped'].cursor()
+        cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
+        for form_group in form_groups:
+            self.truncated_tables = []
+            tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
+            for table in tables:
+                try:
+                    self.truncate_table_data(form_group['form_group'], table['dest_table_name'], None, None)
+                except Exception as e:
+                    top_error = True
+                    all_comments.append(str(e))
+                    terminal.tprint('\t%s' % str(e), 'fail')
+
+        # Re-enable the checks
+        cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
+
+        return top_error, all_comments
+
+    def truncate_table_data(self, form_group, table, ref_table, ref_column):
+        if table in self.truncated_tables:
+            terminal.tprint("\tThe table %s has already been truncated, skipping it..." % table, 'okblue')
+            return False
+
+        terminal.tprint("\tGenerating %s's (%s group) truncate query" % (table, form_group), 'okblue')
+        truncate_query = "TRUNCATE %s" % table
+        mappings = list(FormMappings.objects.filter(form_group=form_group).filter(dest_table_name=table).values())
+
+        for mapping in mappings:
+            if mapping['ref_table_name'] is not None and table != mapping['dest_table_name']:
+                # this table should be truncated before the current table
+                self.truncate_table_data(form_group, mapping['dest_table_name'], table, mapping['dest_column_name'])
+
+        terminal.tprint("\tTruncating the table '%s'" % table, 'warn')
+        cursor = connections['mapped'].cursor()
+        cursor.execute(truncate_query)
+        self.truncated_tables.append(table)
+
+        return False
+
+    def get_table_primary_key(self, table):
+        with connections['mapped'].cursor() as mapped_cursor:
+            dest_columns_q = 'DESC %s' % table
+            mapped_cursor.execute(dest_columns_q)
+            dest_columns = mapped_cursor.fetchall()
+
+            for dest_column in dest_columns:
+                # check if it is a primary key
+                if dest_column[3] == 'PRI':
+                    return dest_column[0]
+
+        return None
+
+    def create_error_log_entry(self, type, err_message, uuid, comments):
+        comments = '' if comments is None else comments
+        try:
+            proc_err = ProcessingErrors(
+                err_code=settings.ERR_CODES[type]['CODE'],
+                err_message=err_message,
+                data_uuid=uuid,
+                err_comments=comments
+            )
+            proc_err.publish()
         except Exception as e:
-            raise Exception(str(e))
+            terminal.tprint(str(e), 'fail')
+            raise
 
 
 def auto_process_submissions():

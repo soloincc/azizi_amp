@@ -332,3 +332,11 @@ def manual_data_process(request):
 
     to_return = {'error': is_success, 'comments': comments}
     return return_json(to_return)
+
+
+def delete_processed_data(request):
+    odk = OdkForms()
+    (is_success, comments) = odk.delete_processed_data()
+
+    to_return = {'error': is_success, 'comments': comments}
+    return return_json(to_return)
