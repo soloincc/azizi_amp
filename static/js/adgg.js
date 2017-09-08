@@ -7,6 +7,7 @@ function BadiliDash() {
     this.reEscape = new RegExp('(\\' + ['/', '.', '*', '+', '?', '|', '(', ')', '[', ']', '{', '}', '\\'].join('|\\') + ')', 'g')
     this.d3_width = 900;
     this.d3_height = 300;
+    this.default_zoom = {minZoom: 6, maxZoom: 24};
 
     $.ajaxSetup({
       beforeSend: function(xhr, settings) {
@@ -15,6 +16,12 @@ function BadiliDash() {
         }
       }
     });
+
+    this.base_color = {
+        "color": "#628cff",
+        "weight": 1,
+        "fill-opacity": 1.3
+    };
 
     this.backgroundColor1 = [
         'rgba(255, 99,  132, 0.2)', 'rgba(54,  162, 235, 0.2)', 'rgba(255, 206, 86,  0.2)', 'rgba(75,  192, 192, 0.2)',
@@ -129,7 +136,8 @@ function BadiliDash() {
     $('#confirm_clear_mappings').on('click', this.clearMappings);
     $('#dry_run').on('click', this.executeProcessingDryRun);
     $('#confirm_process_mappings').on('click', this.executeDataProcessor);
-    $('#confirm_delete_data').on('click', this.clearProcessedData)
+    $('#confirm_delete_data').on('click', this.clearProcessedData);
+    $(document).on('click', '.edit_record', this.viewRawSubmission);
 }
 
 BadiliDash.prototype.initiate = function(){
@@ -1025,6 +1033,142 @@ BadiliDash.prototype.formatErrorMessages = function(comments){
         message = '<div class="alert alert-success alert-dismissable"><button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>The mappings are valid. No warning/comments</div>';
     }
     return message;
+};
+
+BadiliDash.prototype.initiateProcessingErrorsPage = function(){
+    dash.error_table = $('#processing_errors').dynatable({
+      dataset: {
+        paginate: true,
+        recordCount: true,
+        sorting: true,
+        ajax: true,
+        ajaxUrl: '/fetch_processing_errors/',
+        ajaxOnLoad: true,
+        records: []
+      }
+    });
+
+    dash.initJSONEditor()
+};
+
+BadiliDash.prototype.viewRawSubmission = function(){
+    var rec_id = $(this).data("identifier");
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/fetch_single_error/", dataType: 'json', data: {'err_id': rec_id},
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            if (data.error) {
+                dash.showNotification('The data truncation process failed', 'error', true);
+            } else {
+                dash.populateErrorInfo(data);
+                dash.showNotification('The error message was loaded successfully!', 'success', true);
+            }
+        }
+    });
+};
+
+BadiliDash.prototype.populateErrorInfo = function(data){
+    // load the json data
+    dash.renderJSON(data.raw_submission.raw_data);
+    var resolved = undefined;
+    if(data.err_json.is_resolved){
+        resolved = '<button type="button" class="btn btn-success btn-sm">Yes</button>';
+    }
+    else{
+        resolved = '<button type="button" class="btn btn-danger btn-sm">No</button>';
+    }
+    $('#is_resolved').html(resolved);
+    $('#error_id').html(data.err_json.id);
+    $('#error_code').html(data.err_json.err_code);
+    $('.uuid').html(data.raw_submission.uuid);
+    $('#subm_time').html(data.raw_submission.submission_time);
+    $('#err_comments').html(data.err_json.err_comments);
+    $('#err_message').html(data.err_json.err_message);
+    $('#add_comments').html(data.err_json.err_comments);
+
+    $('.processing_comments, .json_editor').removeClass('hidden');
+};
+
+BadiliDash.prototype.initJSONEditor = function(){
+    // Set default options
+    JSONEditor.defaults.options.theme = 'bootstrap2';
+
+    // Initialize the editor
+    dash.json_editor = new JSONEditor(document.getElementById("edit_raw_json"),{
+      schema: {
+          type: "object",
+          properties: {
+              name: { "type": "string" }
+          }
+      }
+    });
+};
+
+BadiliDash.prototype.renderJSON = function(json_o){
+    try {
+        schema = JSON.parse(json_o);
+    }
+    catch(e) {
+        dash.showNotification('Invalid JSON Schema: '+e.message, 'error', true);
+        return;
+    }
+    dash.json_editor.setValue(JSON.parse(json_o));
+};
+
+BadiliDash.prototype.initiateMap = function(lat, lon, zoom, include_overlay = true){
+    if (lat == undefined) {
+        dash.map = L.map('leaflet_map', dash.default_zoom).setView([0.2934628,38.132656], 6);
+    }
+    else {
+        dash.map = L.map('leaflet_map', dash.default_zoom).setView([lat, lon], zoom);
+    }
+
+    if(include_overlay){
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+                '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            id: 'mapbox.streets',
+            detectRetina: false
+        }).addTo(dash.map);
+    }
+};
+
+BadiliDash.prototype.loadFirstLevel = function(c_code){
+    $('#spinnermModal').modal('show');
+    $.get('/first_level_geojson?c_code='+c_code, function(response){
+        // console.log(response);
+        dash.layersData = [];
+        $.each(response, function(i, that){
+            var n_layer = L.geoJSON(that.polygon, {style: dash.base_color, county_code: that.c_code}).addTo(dash.map);
+
+            n_layer.on('mouseover', function(){
+                setTimeout(function() { dash.updateInfoDiv(that); }, 200);
+            });
+            n_layer.on({click: function(){
+                dash.showNotification('Pending functionality', 'error', true);
+                // $('#spinnerModal').toggleClass('hidden');
+                // window.location.href = '/view_county?code='+this.options.county_code;
+            }});
+            n_layer.on('mouseout', function(){
+                dash.updateInfoDiv(None);
+            });
+        });
+        $('#spinnermModal').modal('hide');
+    });
+};
+
+BadiliDash.prototype.updateInfoDiv = function(data){
+    console.log(data);
+};
+
+BadiliDash.prototype.initiateMapVisualization = function(center_lat, center_lon, zoom_level){
+    dash.initiateMap(center_lat, center_lon, zoom_level);
+
+    // load the first level admin region
+    dash.loadFirstLevel(54);
 };
 
 var dash = new BadiliDash();

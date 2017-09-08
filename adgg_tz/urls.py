@@ -46,4 +46,9 @@ urlpatterns = [
     url(r'^clear_mappings/$', views.clear_mappings, name='clear_mappings'),
     url(r'^manual_data_process/$', views.manual_data_process, name='manual_data_process'),
     url(r'^delete_processed_data/$', views.delete_processed_data, name='delete_processed_data'),
+    url(r'^processing_errors/$', views.processing_errors, name='processing_errors'),
+    url(r'^fetch_processing_errors/$', views.fetch_processing_errors, name='fetch_processing_errors'),
+    url(r'^fetch_single_error/$', views.fetch_single_error, name='fetch_single_error'),
+    url(r'^map_visualization/$', views.map_visualization, name='map_visualization'),
+    url(r'^first_level_geojson/$', views.first_level_geojson, name='first_level_geojson'),
 ]

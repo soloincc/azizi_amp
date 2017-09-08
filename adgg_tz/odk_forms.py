@@ -5,15 +5,15 @@ import subprocess
 import hashlib
 import dateutil.parser
 
-from django.conf import settings
 from ConfigParser import ConfigParser
-from django.forms.models import model_to_dict
 from datetime import datetime
-from django.http import HttpResponse
-from django.http import HttpRequest
 from collections import defaultdict
 
+from django.conf import settings
+from django.forms.models import model_to_dict
 from django.db import connection, connections, transaction, IntegrityError
+from django.core.paginator import Paginator
+from django.http import HttpResponse, HttpRequest
 
 from terminal_output import Terminal
 from excel_writer import ExcelWriter
@@ -1467,7 +1467,7 @@ class OdkForms():
             # we have a longitude
             return geo[1]
         if re.search('alt', column):
-            # we have a longitude
+            # we have altitude 
             return geo[2]
 
         raise Exception('Unknown Destination Column: Encountered a GPS data field (%s), but I cant seem to deduce which type(latitude, longitude, altitude) the current column (%s) is.' % (q_data[sources[0]], column))
@@ -1549,8 +1549,77 @@ class OdkForms():
             )
             proc_err.publish()
         except Exception as e:
-            terminal.tprint(str(e), 'fail')
-            raise
+            mssg = '%s, %s, "%s" %s %s' % (str(e), type, err_message, uuid, comments)
+            terminal.tprint(mssg, 'fail')
+            raise Exception(mssg)
+
+    def processing_errors(self, cur_page, per_page, offset, sorts, queries):
+        all_errors = ProcessingErrors.objects.all().order_by('-id')
+        p = Paginator(all_errors, per_page)
+        p_errors = p.page(cur_page)
+        if sorts is not None:
+            print sorts
+
+        to_return = []
+        for error in p_errors:
+            err = model_to_dict(error)
+            err['actions'] = '<button type="button" data-identifier="%s" class="edit_record btn btn-sm btn-outline btn-warning">View</button>' % err['id']
+            to_return.append(err)
+        return False, {'records': to_return, "queryRecordCount": p.count, "totalRecordCount": p.count}
+
+    def fetch_single_error(self, err_id):
+        error = ProcessingErrors.objects.all().filter(id=err_id)
+        cur_error = model_to_dict(error[0])
+
+        # if the uuid has the string uuid, remove it
+        if re.match('^uuid', cur_error['data_uuid']):
+            m = re.findall("^uuid\:(.+)$", cur_error['data_uuid'])
+            uuid = m[0]
+        else:
+            uuid = cur_error['data_uuid']
+
+        # get the record with this uuid
+        r_sub = RawSubmissions.objects.all().filter(uuid=uuid)
+        r_sub = model_to_dict(r_sub[0])
+
+        return False, cur_error, r_sub
+
+    def fetch_base_map_settings(self):
+        with connection.cursor() as cursor:
+            tz_details_q = 'SELECT id, iso_code, name, center_lat, center_long FROM country where iso_code = "TZA"'
+            cursor.execute(tz_details_q)
+            tz_details = self.dictfetchall(cursor)
+
+            terminal.tprint(json.dumps(tz_details), 'warn')
+
+        return tz_details[0]
+
+    def dictfetchall(self, cursor):
+        # Return all rows from a cursor as a dict
+        columns = [col[0] for col in cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+
+    def first_level_geojson(self, c_code):
+        with connection.cursor() as cursor:
+            tz_details_q = 'SELECT a.id, a.iso_code, a.name, a.center_lat, a.center_long, b.geometry FROM country as a inner join admin_level_one as b on a.id=b.country_id where a.id = %d' % c_code
+            cursor.execute(tz_details_q)
+            tz_details = self.dictfetchall(cursor)
+
+            to_return = []
+            for res in tz_details:
+                to_return.append({
+                    'c_iso': res['iso_code'],
+                    'c_name': res['name'],
+                    'c_lat': res['center_lat'],
+                    # 'c_perc': res.c_perc,
+                    'c_lon': res['center_long'],
+                    'polygon': json.loads(res['geometry'])
+                })
+
+        return to_return
 
 
 def auto_process_submissions():

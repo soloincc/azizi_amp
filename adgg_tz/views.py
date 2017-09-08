@@ -3,9 +3,11 @@ from __future__ import absolute_import  # Python 2 only
 import json
 import logging
 import traceback
-
+import gzip
 import posixpath
+
 from urlparse import unquote
+from cStringIO import StringIO as IO
 
 from django.conf import settings
 from django.contrib.staticfiles import finders
@@ -316,6 +318,13 @@ def return_json(mappings):
     response['Content-Message'] = to_return
     return response
 
+def return_polygons(mappings):
+    to_return = json.dumps(mappings)
+    response = HttpResponse(to_return)
+    response['Content-Type'] = 'application/json'
+    response['Content-Message'] = to_return
+    return response
+
 
 def validate_mappings(request):
     odk = OdkForms()
@@ -340,3 +349,76 @@ def delete_processed_data(request):
 
     to_return = {'error': is_success, 'comments': comments}
     return return_json(to_return)
+
+
+def processing_errors(request):
+    csrf_token = get_or_create_csrf_token(request)
+    page_settings = {
+        'page_title': "%s | Processing Errors" % settings.SITE_NAME,
+        'csrf_token': csrf_token,
+        'section_title': 'Processing Errors'
+    }
+    return render(request, 'processing_errors.html', page_settings)
+
+
+def fetch_processing_errors(request):
+    cur_page = json.loads(request.GET['page'])
+    per_page = json.loads(request.GET['perPage'])
+    offset = json.loads(request.GET['offset'])
+    sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
+    queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
+
+    odk = OdkForms()
+    (is_success, proc_errors) = odk.processing_errors(cur_page, per_page, offset, sorts, queries)
+    to_return = json.dumps(proc_errors)
+
+    response = HttpResponse(to_return, content_type='text/json')
+    response['Content-Message'] = to_return
+    return response
+
+
+def fetch_single_error(request):
+    err_id = json.loads(request.POST['err_id'])
+    odk = OdkForms()
+    (is_success, cur_error, r_sub) = odk.fetch_single_error(err_id)
+
+    to_return = {'error': is_success, 'err_json': cur_error, 'raw_submission': r_sub}
+    return return_json(to_return)
+
+
+def map_visualization(request):
+    csrf_token = get_or_create_csrf_token(request)
+    odk = OdkForms()
+    map_settings = odk.fetch_base_map_settings()
+    page_settings = {
+        'page_title': "%s | Map Based Visualizations" % settings.SITE_NAME,
+        'csrf_token': csrf_token,
+        'map_title': 'Map Based Visualization',
+        'section_title': 'Map Based Visualization',
+        'map_settings': json.dumps(map_settings)
+    }
+    return render(request, 'map_visualizations.html', page_settings)
+
+
+def first_level_geojson(request):
+    odk = OdkForms()
+    c_code = json.loads(request.GET['c_code'])
+    cur_polygons = odk.first_level_geojson(int(c_code))
+
+    return HttpResponse(json.dumps(cur_polygons), content_type='application/json')
+
+
+def zip_response(json_data):
+    gzip_buffer = IO()
+    gzip_file = gzip.GzipFile(mode='wb', fileobj=gzip_buffer)
+    gzip_file.write(json_data)
+    gzip_file.close()
+
+    response = HttpResponse(content_type='application/json')
+
+    response.data = gzip_buffer.getvalue()
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Vary'] = 'Accept-Encoding'
+    response.headers['Content-Length'] = len(response.data)
+
+    return response

@@ -1,0 +1,73 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/leaflet/dist/leaflet.css') }}" />
+
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class='row'>
+        <div class='col-lg-9'>
+            <div class="container">
+                {% if error_mssg is defined %}
+                <div class='row'>
+                    <div class="alert alert-danger alert-dismissable">
+                        <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                        {{ error_mssg }}
+                    </div>
+                </div>
+                {% endif %}
+                {% if mssg is defined %}
+                <div class='row'>
+                    <div class="alert alert-success alert-dismissable">
+                        <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                        {{ mssg }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="ibox-content">
+                <div class="row">
+                    <div class="col-sm-2 m-b-xs">
+                        <a href="/" class="btn btn-outline btn-danger">
+                            <i class="fa fa-refresh"></i> Reset
+                        </a>
+                    </div>
+                    <div class="col-sm-7 m-b-xs text-center text-warning">
+                        <h3 id='map_title'>{{ map_title}}</h3>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="input-group">
+                            <input type="text" placeholder="Search" id='global_search' class="input-sm form-control"> 
+                                <span class="input-group-btn"> <button type="button" class="btn btn-sm btn-primary"> Go!</button> </span>
+                        </div>
+                    </div>
+                </div>
+                <div id="leaflet_map"></div>
+            </div>
+        </div>
+        <div class='col-lg-3'>
+            <div class="ibox float-e-margins">
+                <div class='ibox-title text-success'>Information Box</div>
+                <div class="ibox-content">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type='text/javascript' src="{{ static('bower/leaflet/dist/leaflet.js') }}"></script>
+    <script type='text/javascript' src="{{ static('js/adgg.js') }}"></script>
+
+<script>
+    $(document).ready(function(){
+        map_settings = {{ map_settings|safe }};
+        dash.initiateMapVisualization(-5.407676, 34.220595, 5);
+    });
+</script>
+
+</div>
+
+{% endblock %}
