@@ -244,6 +244,7 @@ class OdkForms():
         """
         try:
             cur_form = ODKForm.objects.get(form_id=form_id)
+            self.cur_form_group = cur_form.form_group
 
             # check if the structure exists
             if cur_form.structure is None:
@@ -301,7 +302,7 @@ class OdkForms():
         for node in nodes['children']:
             if 'type' in node:
                 if 'label' in node:
-                    node_label = self.process_node_label(node)
+                    (node_label, locale) = self.process_node_label(node)
                 else:
                     terminal.tprint("\t\t%s missing label. Using name('%s') instead" % (node['type'], node['name']), 'warn')
                     node_label = node['name']
@@ -357,17 +358,22 @@ class OdkForms():
         self.repeat_level -= 1
         return cur_node
 
-    def add_dictionary_items(self, node, node_type):
+    def add_dictionary_items(self, node, node_type, parent_node=None):
         # check if this key already exists
-        dict_item = DictionaryItems.objects.filter(form_id=self.cur_form_id, t_key=node['name'])
+        dict_item = DictionaryItems.objects.filter(form_group=self.cur_form_group, parent_node=parent_node, t_key=node['name'])
 
         if dict_item.count() == 0:
-            terminal.tprint(json.dumps(node), 'warn')
+            terminal.tprint('\tSaving the node (%s)' % node_type, 'warn')
+            terminal.tprint('\t\t%s' % json.dumps(node), 'okblue')
             node_label = node['label'] if 'label' in node else node['name']
+            (node_label, locale) = self.process_node_label(node)
+            locale = settings.LOCALES[locale]
             dict_item = DictionaryItems(
-                form_id=self.cur_form_id,
+                form_group=self.cur_form_group,
+                parent_node=parent_node,
                 t_key=node['name'],
                 t_type=node_type,
+                t_locale=locale,
                 t_value=node_label
             )
             dict_item.publish()
@@ -376,7 +382,9 @@ class OdkForms():
                 if node['type'] == 'select one' or node['type'] == 'select all that apply':
                     if 'children' in node:
                         for child in node['children']:
-                            self.add_dictionary_items(child, 'choice')
+                            self.add_dictionary_items(child, 'choice', node['name'])
+        else:
+            terminal.tprint("\tThe node %s is already saved, skipping it" % node['name'], 'okblue')
 
     def process_node_label(self, t_node):
         '''
@@ -385,12 +393,14 @@ class OdkForms():
         node_type = self.determine_type(t_node['label'])
         if node_type == 'is_json':
             cur_label = t_node['label'][settings.DEFAULT_LOCALE]
+            locale = settings.DEFAULT_LOCALE
         elif node_type == 'is_string':
             cur_label = t_node['label']
+            locale = settings.DEFAULT_LOCALE
         else:
             raise Exception('Cannot determine the type of label that I have got! %s' % json.dumps(t_node['label']))
 
-        return cur_label
+        return cur_label, locale
 
     def add_to_all_nodes(self, t_node):
         # add a node to the list of all nodes for creating the tree
@@ -398,7 +408,7 @@ class OdkForms():
             del t_node['items']
 
         if 'label' in t_node:
-            cur_label = self.process_node_label(t_node)
+            (cur_label, locale) = self.process_node_label(t_node)
             t_node['label'] = cur_label
             if re.search(":$", cur_label) is not None:
                 # in case the label was ommitted, use the name tag
@@ -1102,6 +1112,8 @@ class OdkForms():
         is_fully_mapped = True
         is_mapping_valid = True
         comments = []
+        self.validated_tables = []
+        self.tables_being_validated = []
 
         for table in mapped_tables:
             (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(table['dest_table_name'])
@@ -1112,6 +1124,7 @@ class OdkForms():
         return is_fully_mapped, is_mapping_valid, comments
 
     def validate_mapped_table(self, table):
+        self.tables_being_validated.append(table)
         comments = []
         is_fully_mapped = True
         is_mapping_valid = True
@@ -1154,7 +1167,8 @@ class OdkForms():
 
                 # If the column is of type int, check if it a foreign key
                 is_foreign_key = self.foreign_key_check(settings.DATABASES['mapped']['NAME'], table, dest_column[0])
-                if is_foreign_key is not False and is_foreign_key[0] is not None:
+                if is_foreign_key is not False and is_foreign_key[0] is not None and table != is_foreign_key[1] and is_foreign_key[1] not in self.validated_tables and is_foreign_key[1] not in self.tables_being_validated:
+                    terminal.tprint('\tFound a linked table to validate. Current table: %s, table to validate %s' % (table, is_foreign_key[1]), 'warn')
                     # check that the corresponding table is fully mapped
                     (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(is_foreign_key[1])
                     if not is_table_fully_mapped:
@@ -1168,6 +1182,7 @@ class OdkForms():
                 comments.append({'type': 'danger', 'message': "The referenced table '%s' doesn't have a primary key defined. I wont be able to process the data." % is_foreign_key[1]})
                 is_mapping_valid = False
 
+        self.validated_tables.append(table)
         return is_fully_mapped, is_mapping_valid, comments
 
     def foreign_key_check(self, schema, table, column):

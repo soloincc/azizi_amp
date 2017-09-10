@@ -150,14 +150,15 @@ class ImagesLookup(models.Model):
 
 class DictionaryItems(BaseTable):
     # define the dictionary structure
-    form_id = models.IntegerField()
+    form_group = models.CharField(max_length=100, db_index=True)
+    parent_node = models.CharField(max_length=100, db_index=True, null=True)
     t_key = models.CharField(max_length=100, db_index=True)
     t_locale = models.CharField(max_length=50)
     t_type = models.CharField(max_length=30, db_index=True)
     t_value = models.CharField(max_length=1000)
 
     class Meta:
-        unique_together = ('form_id', 't_key')
+        unique_together = ('form_group', 'parent_node', 't_key')
         db_table = 'dictionary_items'
 
     def publish(self):
