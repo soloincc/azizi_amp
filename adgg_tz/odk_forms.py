@@ -260,6 +260,13 @@ class OdkForms():
             else:
                 terminal.tprint("\tFetching the form's '%s' structure from the database" % cur_form.form_name, 'okblue')
                 processed_nodes = cur_form.processed_structure
+                # force a re-extraction of the nodes
+                self.cur_node_id = 0
+                self.cur_form_id = form_id
+                self.repeat_level = 0
+                self.all_nodes = []
+                self.top_node = {"name": "Main", "label": "Top Level", "parent_id": -1, "type": "top_level", "id": 0}
+                self.top_level_hierarchy = self.extract_repeating_groups(cur_form.structure, 0)
                 # terminal.tprint(json.dumps(cur_form.structure), 'okblue')
         except Exception as e:
             print(traceback.format_exc())
@@ -377,6 +384,14 @@ class OdkForms():
                 t_value=node_label
             )
             dict_item.publish()
+
+            # add the dictionary item to the final database too. It is expecting that the table exists
+            insert_q = '''
+                INSERT INTO dictionary_items(form_group, parent_node, t_key, t_type, t_locale, t_value) 
+                VALUES('%s', '%s', '%s', '%s', '%s', '%s')
+            ''' % (self.cur_form_group, parent_node, node['name'], node_type, locale, node_label)
+            with connections['mapped'].cursor() as cursor:
+                cursor.execute(insert_q)
 
             if 'type' in node:
                 if node['type'] == 'select one' or node['type'] == 'select all that apply':
