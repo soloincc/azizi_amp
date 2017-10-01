@@ -664,18 +664,17 @@ BadiliDash.prototype.initiateIncidentsMap = function(){
  * @param   type        The type of message
  */
 BadiliDash.prototype.showNotification = function(message, type, autoclose){
-   if(type === undefined) { type = 'error'; }
-   if(autoclose === undefined) { autoclose = true; }
+    if(type === undefined) { type = 'error'; }
+    if(autoclose === undefined) { autoclose = true; }
 
-   $('#messageNotification div').html(message);
-   if($('#messageNotification').jqxNotification('width') === undefined){
-      $('#messageNotification').jqxNotification({
-         width: 350, position: 'top-right', opacity: 0.9,
-         autoOpen: false, animationOpenDelay: 800, autoClose: autoclose, template: type
-       });
-   }
-   else{ $('#messageNotification').jqxNotification({template: type}); }
-
+    if($('#messageNotification').jqxNotification('width') === undefined){
+        $('#messageNotification').jqxNotification({
+            width: 350, position: 'top-right', opacity: 0.9,
+            autoOpen: false, animationOpenDelay: 800, autoClose: autoclose, template: type
+        });
+    }
+    $('#messageNotification .jqx-notification-content div').html(message);
+    $('#messageNotification').jqxNotification({template: type});
    $('#messageNotification').jqxNotification('open');
 };
 
@@ -937,6 +936,7 @@ BadiliDash.prototype.validateMappings = function(){
                 if(data.is_fully_mapped && data.is_mapping_valid){
                     $('#dry_run').removeClass('disabled');
                 }
+                dash.is_mapping_valid = (data.is_mapping_valid == true) ? true : false;
             }
         }
     });
@@ -964,7 +964,7 @@ BadiliDash.prototype.clearMappings = function(){
                 });
                 return;
             } else {
-                dash.showNotification('The mapping(s) were successful', 'success', true);
+                dash.showNotification('The mapping(s) were cleared successfully', 'success', true);
                 dash.refreshMappingsTable(data.mappings);
             }
         }
@@ -976,6 +976,18 @@ BadiliDash.prototype.executeDataProcessor = function(){
 };
 
 BadiliDash.prototype.executeProcessingDryRun = function(is_dry_run=true){
+    if(dash.is_mapping_valid == false){
+        dash.showNotification('Cowardly refusing to perform a dry ran since mapping validation has not been done/passed.', 'warning', true);
+        return;
+    }
+    if(is_dry_run == false){
+        if(dash.is_dry_run_passed == false){
+            dash.showNotification('Cowardly refusing to process the data since the dry run has not been done/passed.', 'warning', true);
+            $('#clearMappingsModal').modal('hide');
+            $('#processMappingsModal').modal('hide');
+            return;
+        }
+    }
     $('#spinnermModal').modal('show');
     if(is_dry_run == false){
         $('#clearMappingsModal').modal('hide');
@@ -988,15 +1000,21 @@ BadiliDash.prototype.executeProcessingDryRun = function(is_dry_run=true){
             $('#spinnermModal').modal('hide');
             $('#clearMappingsModal').modal('hide');
             $('#processMappingsModal').modal('hide');
-            if (data.error) {
+
+            if(data.comments.length != 0){
                 message = dash.formatErrorMessages(data.comments);
                 $('#mapping_comments').html(message);
+            }
+            else{
+                $('#mapping_comments').html('');
+            }
+            if (data.error) {
                 dash.showNotification('The data processing dry ran failed', 'error', true);
             } else {
-                $('#mapping_comments').html('');
                 dash.showNotification('The data processing dry ran was successful', 'success', true);
                 $('#process_data').removeClass('disabled');
             }
+            dash.is_dry_run_passed = (data.error == false) ? true : false;
         }
     });
 };

@@ -14,6 +14,7 @@ from django.forms.models import model_to_dict
 from django.db import connection, connections, transaction, IntegrityError
 from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpRequest
+from raven import Client
 
 from terminal_output import Terminal
 from excel_writer import ExcelWriter
@@ -21,6 +22,7 @@ from models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLook
 from sql import Query
 
 terminal = Terminal()
+sentry = Client('http://412f07efec7d461cbcdaf686c3b01e51:c684fccd436e46169c71f8c841ed3b00@sentry.badili.co.ke/3')
 
 LOGGING = {
     'version': 1,
@@ -85,6 +87,7 @@ class OdkForms():
             for form in all_forms:
                 to_return.append({'title': form.form_name, 'id': form.form_id})
         except Exception as e:
+            sentry.captureException()
             terminal.tprint(str(e), 'fail')
 
         terminal.tprint(json.dumps(to_return), 'warn')
@@ -102,6 +105,7 @@ class OdkForms():
             except Exception as e:
                 logging.error("Couldn't find the value for the key '%s' in the dictionary. %s" % (t_key, str(e)))
                 terminal.tprint("Couldn't find the value for the key '%s' in the dictionary. %s" % (t_key, str(e)), 'fail')
+                sentry.captureException()
                 return "Unknown (%s)" % t_key
 
     def refresh_forms(self):
@@ -146,6 +150,7 @@ class OdkForms():
                 cur_form.publish()
                 to_return.append({'title': form['title'], 'id': form['formid']})
             except Exception as e:
+                sentry.captureException()
                 terminal.tprint(str(e), 'fail')
 
         return to_return
@@ -214,6 +219,7 @@ class OdkForms():
             logger.error('Some error....')
             logger.error(str(e))
             terminal.tprint(str(e), 'error')
+            sentry.captureException()
             raise Exception(str(e))
 
         return submissions
@@ -272,6 +278,7 @@ class OdkForms():
             print(traceback.format_exc())
             logger.debug(str(e))
             terminal.tprint(str(e), 'fail')
+            sentry.captureException()
             raise Exception(str(e))
 
         return processed_nodes
@@ -524,6 +531,7 @@ class OdkForms():
                     with connection.cursor() as cursor:
                         dquery = "drop table %s" % table_name_hash_dig
                         cursor.execute(dquery)
+                    sentry.captureException()
                     raise Exception("For some reason I can't create a primary key or unique key for the table %s. Deleting it entirely" % table_name)
 
                 table_views.append({'table_name': table_name, 'hashed_name': table_name_hash_dig})
@@ -617,6 +625,7 @@ class OdkForms():
             terminal.tprint(str(e), 'fail')
             associated_forms.append(form_id)
             form_name = "Form%s" % str(form_id)
+            sentry.captureException()
             logging.info(str(e))
 
         # having all the associated form ids, fetch the required data
@@ -636,6 +645,7 @@ class OdkForms():
                 logging.debug(traceback.format_exc())
                 logging.error(str(e))
                 terminal.tprint(str(e), 'fail')
+                sentry.captureException()
                 raise Exception(str(e))
 
             if this_submissions is None:
@@ -655,6 +665,7 @@ class OdkForms():
             try:
                 self.save_user_view(form_id, view_name, nodes, all_submissions, self.output_structure)
             except Exception as e:
+                sentry.captureException()
                 return {'is_downloadable': False, 'error': True, 'message': str(e)}
         elif download_type == 'submissions':
             return all_submissions
@@ -728,6 +739,8 @@ class OdkForms():
 
         for key, value in node.iteritems():
             # clean the key
+            # if re.search("ai", key) is not None:
+            #     terminal.tprint(key, 'ok')
             clean_key = self.clean_json_key(key)
             if clean_key == '_geolocation':
                 continue
@@ -889,6 +902,7 @@ class OdkForms():
 
             except Exception as e:
                 terminal.tprint(str(e), 'fail')
+                sentry.captureException()
                 return code
 
         # it seems we have our countries processed, just get the clean code
@@ -908,6 +922,7 @@ class OdkForms():
                 return code
         except Exception as e:
             terminal.tprint(str(e), 'fail')
+            sentry.captureException()
             return code
 
     def process_single_submission(self, node, watch_list):
@@ -926,10 +941,11 @@ class OdkForms():
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.info(str(e))
+            sentry.captureException()
             return None
 
         if r.status_code == 200:
-            terminal.tprint("\tResponse %d" % r.status_code, 'ok')
+            # terminal.tprint("\tResponse %d" % r.status_code, 'ok')
             # terminal.tprint(json.dumps(r.json()), 'warn')
             return r.json()
         else:
@@ -978,6 +994,7 @@ class OdkForms():
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.info(str(e))
+            sentry.captureException()
             return {'error': True, 'message': str(e)}
 
     def edit_view(self, request):
@@ -993,6 +1010,7 @@ class OdkForms():
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.info(str(e))
+            sentry.captureException()
             return {'error': True, 'message': str(e)}
 
     def proccess_submissions_count(self, s_count, use_zero=False):
@@ -1044,6 +1062,7 @@ class OdkForms():
             )
             mapping.publish()
         except Exception as e:
+            sentry.captureException()
             return {'error': True, 'message': str(e)}
 
         mappings = self.mapping_info()
@@ -1058,6 +1077,7 @@ class OdkForms():
                 try:
                     re.compile(mapping['regex_validator'])
                 except re.error:
+                    sentry.captureException()
                     return {'error': True, 'message': 'The specified REGEX is not valid!'}
 
                 cur_mapping.validation_regex = mapping['regex_validator']
@@ -1072,6 +1092,7 @@ class OdkForms():
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.info(str(e))
+            sentry.captureException()
             return {'error': True, 'message': str(e)}
 
     def mapping_info(self):
@@ -1123,6 +1144,7 @@ class OdkForms():
         Validate the mappings and ensure all mandatory fields have been mapped
         '''
         # get all the mapped tables
+        terminal.tprint('Beginning the process of validating the mapped tables', 'okblue')
         mapped_tables = list(FormMappings.objects.values('dest_table_name').distinct())
         is_fully_mapped = True
         is_mapping_valid = True
@@ -1139,6 +1161,7 @@ class OdkForms():
         return is_fully_mapped, is_mapping_valid, comments
 
     def validate_mapped_table(self, table):
+        terminal.tprint('\tValidating mapped table - "%s"' % table, 'warn')
         self.tables_being_validated.append(table)
         comments = []
         is_fully_mapped = True
@@ -1156,6 +1179,36 @@ class OdkForms():
 
             # loop through all the destination columns and ensure mandatory fields have been mapped
             for dest_column in dest_columns:
+                # determine if we have a foreign key
+                is_foreign_key = self.foreign_key_check(settings.DATABASES['mapped']['NAME'], table, dest_column[0])
+                # If the column is of type int, check if it a foreign key
+
+                if is_foreign_key is not False:
+                    if is_foreign_key[0] is not None:
+                        if is_foreign_key[1] in self.validated_tables:
+                            # We have a FK column whose table is already validated so lets continue
+                            continue
+                        if table != is_foreign_key[1] and is_foreign_key[1] not in self.tables_being_validated:
+                            terminal.tprint('\tFound a linked table to validate. Current table: %s, table to validate %s' % (table, is_foreign_key[1]), 'warn')
+                            # check that the corresponding table is fully mapped
+                            (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(is_foreign_key[1])
+                            if not is_table_fully_mapped and dest_column[2] == 'NO':
+                                mssg = "REFERENTIAL INTEGRITY FAIL: The referenced table '%s' is not fully mapped." % is_foreign_key[1]
+                                terminal.tprint('\t%s' % mssg, 'fail')
+                                comments.append({'type': 'danger', 'message': mssg})
+                                is_fully_mapped = False
+                            else:
+                                mssg = "We wont process the linked table '%s', it is not fully mapped but the column '%s.%s' is not a mandatory field" % (is_foreign_key[1], table, dest_column[0])
+                                comments.append({'type': 'warning', 'message': mssg})
+                                terminal.tprint('\t%s' % mssg, 'warn')
+
+                            if not is_table_mapping_valid:
+                                mssg = "REFERENTIAL INTEGRITY FAIL: The referenced table '%s' mapping is not valid." % is_foreign_key[1]
+                                terminal.tprint('\t%s' % mssg, 'fail')
+                                comments.append({'type': 'danger', 'message': mssg})
+                                is_mapping_valid = False
+                            continue
+
                 # check if the column in mandatory and is included in the mapping
                 if dest_column[2] == 'NO':
                     # check if it is a primary key
@@ -1179,19 +1232,6 @@ class OdkForms():
                 if dest_column[0] in all_mapped_columns:
                     if all_mapped_columns[dest_column[0]]['validation_regex'] is None:
                         comments.append({'type': 'warning', 'message': "Consider adding a validation regex for column '%s' of the table '%s'" % (dest_column[0], table)})
-
-                # If the column is of type int, check if it a foreign key
-                is_foreign_key = self.foreign_key_check(settings.DATABASES['mapped']['NAME'], table, dest_column[0])
-                if is_foreign_key is not False and is_foreign_key[0] is not None and table != is_foreign_key[1] and is_foreign_key[1] not in self.validated_tables and is_foreign_key[1] not in self.tables_being_validated:
-                    terminal.tprint('\tFound a linked table to validate. Current table: %s, table to validate %s' % (table, is_foreign_key[1]), 'warn')
-                    # check that the corresponding table is fully mapped
-                    (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(is_foreign_key[1])
-                    if not is_table_fully_mapped:
-                        comments.append({'type': 'danger', 'message': "REFERENTIAL INTEGRITY FAIL: The referenced table '%s' is not fully mapped." % is_foreign_key[1]})
-                        is_fully_mapped = False
-                    if not is_table_mapping_valid:
-                        comments.append({'type': 'danger', 'message': "REFERENTIAL INTEGRITY FAIL: The referenced table '%s' mapping is not valid." % is_foreign_key[1]})
-                        is_mapping_valid = False
 
             if has_primary_key is False:
                 comments.append({'type': 'danger', 'message': "The referenced table '%s' doesn't have a primary key defined. I wont be able to process the data." % is_foreign_key[1]})
@@ -1232,14 +1272,15 @@ class OdkForms():
         # initiate the process of manually processing the data
         # 1. Get the form groups involved in the mapping
         # 2. For each form group, get all the tables which have been mapped
-        # 2. Get the raw submissions and try and save the data to the destination tables
+        # 3. Get the raw submissions and try and save the data to the destination tables
         form_groups = list(FormMappings.objects.values('form_group').distinct())
         top_error = False
         all_comments = []
-        print is_dry_run
 
         for form_group in form_groups:
+            terminal.tprint("Generating queries for the table '%s'" % form_group['form_group'], 'debug')
             self.cur_group_queries = {}
+            self.all_foreign_keys = defaultdict(dict)
             tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
             for table in tables:
                 try:
@@ -1248,10 +1289,10 @@ class OdkForms():
                     terminal.tprint('\t%s' % str(e), 'fail')
                     top_error = top_error or True
                     all_comments.append(str(e))
+                    break
 
             terminal.tprint('\t%s' % json.dumps(self.cur_group_queries), 'warn')
             try:
-                # terminal.tprint(json.dumps(self.cur_group_queries), 'warn')
                 (is_error, comments) = self.process_form_group_data(form_group['form_group'], is_dry_run)
                 all_comments = copy.deepcopy(all_comments) + copy.deepcopy(comments)
                 top_error = top_error or is_error
@@ -1263,14 +1304,17 @@ class OdkForms():
         return top_error, all_comments
 
     def generate_table_query(self, form_group, table, ref_table, ref_column):
+        terminal.tprint("\tGenerating queries for the table '%s'" % table, 'okblue')
         if table in self.cur_group_queries:
-            terminal.tprint("\tThe query for the table %s has already been generated, skipping it..." % table, 'okblue')
+            terminal.tprint("\t\tThe query for the table %s has already been generated, skipping it..." % table, 'okblue')
             return False
 
-        terminal.tprint("\tGenerating %s's (%s group) query" % (table, form_group), 'warn')
+        terminal.tprint("\t\tGenerating %s's (%s group) query" % (table, form_group), 'warn')
         # get the table primary key
+        # terminal.tprint("\t\tCheck whether table '%s' has a primary key" % table, 'debug')
         primary_key = self.get_table_primary_key(table)
         if primary_key is None:
+            terminal.tprint("Invalid Destination Table: The table '%s' does not have a defined primary key. I can't continue" % table, 'error')
             raise Exception("Invalid Destination Table: The table '%s' does not have a defined primary key. I can't continue" % table)
 
         insert_query = "INSERT INTO %s" % table
@@ -1287,10 +1331,12 @@ class OdkForms():
         self.cur_group_queries[table]['dup_check'] = defaultdict(dict)
 
         for mapping in mappings:
+            terminal.tprint("\t\t\tProcessing the mapping: '%s' - '%s' - '%s' - '%s' - '%s'" % (mapping['form_group'], mapping['form_question'], mapping['odk_question_type'], mapping['dest_table_name'], mapping['dest_column_name']), 'warn')
             if mapping['dest_column_name'] in mapped_columns:
                 # we have a scenario where 2 data
                 self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['has_multiple_sources'] = True
                 self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['sources'].append(mapping['form_question'])
+                source_datapoints.append(mapping['form_question'])
                 continue
 
             if mapping['odk_question_type'] == 'geopoint':
@@ -1305,27 +1351,55 @@ class OdkForms():
                 self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['regex'] = mapping['validation_regex']
 
             if mapping['is_record_identifier']:
-                dc = "%s='%%s'" % mapping['dest_column_name']
+                dc = "%s=%%s" % mapping['dest_column_name']
                 duplicate_constraints = dc if duplicate_constraints == '' else '%s and %s' % (duplicate_constraints, dc)
                 dup_columns_sources.append(mapping['dest_column_name'])
 
             if mapping['ref_table_name'] is not None and table != mapping['dest_table_name']:
                 # this table should be populated before the current table
-                self.generate_table_query(form_group, mapping['dest_table_name'], table, mapping['dest_column_name'])
+                try:
+                    self.generate_table_query(form_group, mapping['dest_table_name'], table, mapping['dest_column_name'])
+                except Exception:
+                    raise
 
             if column_names == '':
                 column_names = mapping['dest_column_name']
-                column_values = "'%s'"
+                column_values = "%s"
             else:
                 column_names = "%s, %s" % (column_names, mapping['dest_column_name'])
-                column_values = "%s, '%%s'" % column_values
+                column_values = "%s, %%s" % column_values
 
             mapped_columns.append(mapping['dest_column_name'])
             source_datapoints.append(mapping['form_question'])
             self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['sources'] = [mapping['form_question']]
 
+        # get all foreign keys on this table
+        all_fks = self.get_all_foreign_keys(table)
+        if len(all_fks) != 0:
+            self.all_foreign_keys[table] = all_fks
+            for cur_fk in all_fks:
+                if cur_fk['fk_table'] in self.cur_group_queries:
+                    terminal.tprint('\tWe have found a linked table "%s" which needs to be added to the query' % cur_fk['fk_table'], 'okblue')
+                    column_names = "%s, %s" % (column_names, cur_fk['col'])
+                    column_values = "%s, %%s" % column_values
+                    cur_fk['is_linked_table'] = True
+                    mapped_columns.append(cur_fk['col'])
+                    self.cur_group_queries[table]['columns'][cur_fk['col']] = cur_fk
+
         final_query = '%s(%s) VALUES(%s)' % (insert_query, column_names, column_values)
-        is_duplicate_query = 'SELECT %s FROM %s WHERE %s' % (primary_key, table, duplicate_constraints)
+        if len(duplicate_constraints) == 0:
+            # we don't have a constraint for this table, but the columns have not been defined...
+            mssg = 'Cowardly refusing to process the data due to <strong>missing unique constraints for the table "%s"</strong>. Please define columns to identify a unique record' % table
+            terminal.tprint('\t%s' % mssg, 'fail')
+            raise Exception(mssg)
+        else:
+            is_duplicate_query = 'SELECT %s FROM %s WHERE %s' % (primary_key, table, duplicate_constraints)
+
+        if len(source_datapoints) == 0:
+            mssg = 'I did not find the source ODK questions from where to fetch the data from. Quitting now'
+            terminal.tprint('\t%s' % mssg, 'fail')
+            raise Exception(mssg)
+
         self.cur_group_queries[table]['query'] = final_query
         self.cur_group_queries[table]['dup_check']['is_duplicate_query'] = is_duplicate_query
         self.cur_group_queries[table]['dup_check']['dup_columns_sources'] = dup_columns_sources
@@ -1336,6 +1410,7 @@ class OdkForms():
         return False
 
     def process_form_group_data(self, form_group, is_dry_run):
+        terminal.tprint("\n\nProcessing the data for form group '%s'" % form_group, 'okblue')
         comments = []
         # get the data belonging to this form group
         if is_dry_run:
@@ -1357,16 +1432,21 @@ class OdkForms():
             with connections['mapped'].cursor():
                 # start a transaction
                 for instance in form_group_data:
+                    # terminal.tprint(json.dumps(instance), 'warn')
                     transaction.set_autocommit(False)
                     try:
                         self.save_instance_data(instance, is_dry_run)
+                    except ValueError as e:
+                        comments.append('Value Error: %s' % str(e))
+                        # is_error = True
                     except IntegrityError as e:
-                        terminal.tprint('Integrity Error: %s' % str(e), 'fail')
-                        comments.append('Integrity Error: %s' % str(e))
+                        terminal.tprint('\tIntegrity Error: %s' % str(e), 'fail')
+                        comments.append('\tIntegrity Error: %s' % str(e))
                         is_error = True
                     except Exception as e:
                         terminal.tprint('Error: %s' % str(e), 'fail')
                         comments.append('Error: %s' % str(e))
+                        sentry.captureException()
                         is_error = True
 
                     if is_dry_run:
@@ -1376,43 +1456,69 @@ class OdkForms():
 
         return is_error, comments
 
+    def get_all_foreign_keys(self, table):
+        terminal.tprint('\tFetching all foreign keys for the table %s' % table, 'okblue')
+        all_fks = []
+        with connections['mapped'].cursor() as mapped_cursor:
+            dest_columns_q = 'DESC %s' % table
+            mapped_cursor.execute(dest_columns_q)
+            dest_columns = mapped_cursor.fetchall()
+
+            for dest_column in dest_columns:
+                # check if it is a primary key
+                # determine if we have a foreign key
+                is_foreign_key = self.foreign_key_check(settings.DATABASES['mapped']['NAME'], table, dest_column[0])
+                # If the column is of type int, check if it a foreign key
+
+                if is_foreign_key is not False:
+                    if is_foreign_key[0] is not None:
+                        all_fks.append({'fk_table': is_foreign_key[1], 'col': dest_column[0], 'ref_col': is_foreign_key[2]})
+        return all_fks
+
     def save_instance_data(self, data, is_dry_run):
         # start the process of saving this instance data
         # the output_structure is required by the process_node function, but we are not using it here, just keep it
-        self.output_structure = {'misc': ['unique_id']}
+        self.output_structure = defaultdict(dict)
         self.cur_fk = {}
+        # terminal.tprint(json.dumps(self.cur_group_queries), 'ok')
         for table, cur_group in self.cur_group_queries.iteritems():
-            # terminal.tprint('\t%s' % json.dumps(cur_group), 'okblue')
+            self.output_structure[table] = ['unique_id']
             self.cur_fk[table] = []
-            # terminal.tprint('\t%s' % data[1], 'okblue')
             nodes = cur_group['source_datapoints']
-            nodes.append('instanceID')
-            nodes_data = self.process_node(json.loads(data[1]), 'misc', nodes, False)
-            # terminal.tprint('\t%s' % json.dumps(nodes_data), 'ok')
+            if 'instanceID' not in nodes:
+                nodes.append('instanceID')
+            # terminal.tprint('\t%s' % json.dumps(self.cur_fk), 'warn')
+            # terminal.tprint('\t%s' % data[1], 'okblue')
+            nodes_data = self.process_node(json.loads(data[1]), table, nodes, False)
+            # terminal.tprint('\t%s' % json.dumps(nodes_data), 'okblue')
 
             try:
                 (data_points, dup_data_points) = self.populate_query(cur_group, nodes_data)
+                final_query = cur_group['query'] % tuple(data_points)
+                terminal.tprint('\tFinal query: %s' % final_query, 'ok')
             except ValueError as e:
+                terminal.tprint('\t%s' % str(e), 'fail')
                 self.create_error_log_entry('data_error', str(e), nodes_data['instanceID'], None)
-                continue
-            except Exception:
+                raise ValueError(str(e))
+            except Exception as e:
+                terminal.tprint('\tI dont know this error "%s". Re-raising it.' % str(e), 'fail')
+                sentry.captureException()
                 raise
-            final_query = cur_group['query'] % tuple(data_points)
-            # terminal.tprint('\t%s' % json.dumps(dup_data_points), 'ok')
+
             # terminal.tprint('\t%s' % json.dumps(data_points), 'warn')
             duplicate_query = cur_group['dup_check']['is_duplicate_query'] % tuple(dup_data_points)
 
             # now lets execute our query
             cursor = connections['mapped'].cursor()
             try:
-                cursor.execute(final_query)
+                cursor.execute(cur_group['query'], tuple(data_points))
                 cursor.execute('SELECT @@IDENTITY')
                 last_insert_id = int(cursor.fetchone()[0])
                 self.cur_fk[table].append(last_insert_id)
             except IntegrityError as e:
                 # it seems we have a duplicate entry, check if it is already saved
                 # terminal.tprint('\tExecuting the duplicate query: %s' % duplicate_query, 'okblue')
-                cursor.execute(duplicate_query)
+                cursor.execute(cur_group['dup_check']['is_duplicate_query'], tuple(dup_data_points))
                 inserted_data = cursor.fetchone()
                 if inserted_data is None:
                     # We have a real duplicate data, this is not a logic error but a problem with the source data
@@ -1420,6 +1526,8 @@ class OdkForms():
                     continue
                 self.cur_fk[table].append(inserted_data[0])
             except Exception as e:
+                terminal.tprint('\tI dont know this error "%s". Re-raising it.' % str(e), 'fail')
+                sentry.captureException()
                 raise
 
         return
@@ -1430,6 +1538,19 @@ class OdkForms():
         for col in q_meta['dest_columns']:
             # get the source node details
             source_node = q_meta['columns'][col]
+            # if we have a linked table, the processing logic is very different
+            if 'is_linked_table' in source_node:
+                if source_node['is_linked_table']:
+                    try:
+                        # the linked table must have already been processed and the saved id already saved
+                        fk_id = self.cur_fk[source_node['fk_table']][0]
+                        data_points.append(fk_id)
+                    except Exception:
+                        mssg = "Expecting that the table '%s' is already processed and the generated foreign key saved. I didn't find it. Can't proceed" % source_node['fk_table']
+                        terminal.tprint('\t%s' % mssg, 'fail')
+                        raise Exception(mssg)
+                    continue
+
             is_foreign_key = True if 'is_foreign_key' in source_node and source_node['is_foreign_key'] else False
             node_data = None
 
@@ -1443,8 +1564,11 @@ class OdkForms():
                 node_data = self.process_geopoint_node(col, source_node['sources'], q_data)
             if is_foreign_key:
                 # we need to get the foreign key to this. It must have been processed and saved already
-                if len(self.cur_fk[source_node['ref_table_name']]) == 0:
-                    raise ValueError("Missing Foreign Key: I don't have a FK to use for table '%s', column '%s'" % (source_node['ref_table_name'], col))
+                # terminal.tprint(json.dumps(self.cur_fk), 'warn')
+                if source_node['ref_table_name'] not in self.cur_fk:
+                    raise Exception("Missing Foreign Key: I don't have a FK to use for table '%s', column '%s'" % (source_node['ref_table_name'], col))
+                elif len(self.cur_fk[source_node['ref_table_name']]) == 0:
+                    raise Exception("Missing Foreign Key: I don't have a FK to use for table '%s', column '%s'" % (source_node['ref_table_name'], col))
                 if len(self.cur_fk[source_node['ref_table_name']]) == 1:
                     # this is definately the foreign key
                     node_data = self.cur_fk[source_node['ref_table_name']][0]
@@ -1454,7 +1578,15 @@ class OdkForms():
 
             if node_data is None:
                 # we still dont have the node data, so it must be coming from a single source, nothing special
-                node_data = q_data[source_node['sources'][0]]
+                try:
+                    node_data = q_data[source_node['sources'][0]]
+                except Exception:
+                    mssg = "I can't find the data for the variable '%s' in '%s'" % (source_node['sources'][0], json.dumps(q_data))
+                    terminal.tprint(mssg, 'fail')
+                    sentry.user_context({
+                        'variable': source_node['sources'][0], 'json_data': q_data
+                    })
+                    raise Exception(mssg)
 
             # Append the found node data
             data_points.append(node_data)
@@ -1477,7 +1609,7 @@ class OdkForms():
                 if node_data == '':
                     node_data = q_data[source]
                 else:
-                    node_data = '%s, %s' % (node_data, q_data[source])
+                    node_data = '%s%s%s' % (node_data, settings.JOINER, q_data[source])
 
         return node_data
 
@@ -1507,7 +1639,10 @@ class OdkForms():
             m = re.search(r'%s' % regex, data)
             if m is None:
                 raise ValueError("Invalid Data - Column '%s': Found '%s' which does not match the validation criteria '%s' defined" % (column, data, regex))
-        except Exception:
+        except ValueError as e:
+            raise
+        except Exception as e:
+            sentry.captureException()
             raise
 
     def delete_processed_data(self):
@@ -1528,6 +1663,7 @@ class OdkForms():
                     top_error = True
                     all_comments.append(str(e))
                     terminal.tprint('\t%s' % str(e), 'fail')
+                    sentry.captureException()
 
         # Re-enable the checks
         cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
@@ -1581,6 +1717,7 @@ class OdkForms():
         except Exception as e:
             mssg = '%s, %s, "%s" %s %s' % (str(e), type, err_message, uuid, comments)
             terminal.tprint(mssg, 'fail')
+            sentry.captureException()
             raise Exception(mssg)
 
     def processing_errors(self, cur_page, per_page, offset, sorts, queries):

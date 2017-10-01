@@ -234,6 +234,8 @@
         dash.data.all_tables = {{ db_tables | safe}};
         dash.data.all_columns = {{ tables_columns | safe}};
         dash.data.mappings = {{ mappings | safe}};
+        dash.is_mapping_valid = false;  // initialize the invalid mappings to ensure that the user validates the mappings
+        dash.is_dry_run_passed = false;
         dash.initiateManageMappings();
     });
 </script>
