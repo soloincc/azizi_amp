@@ -394,11 +394,16 @@ class OdkForms():
 
             # add the dictionary item to the final database too. It is expecting that the table exists
             insert_q = '''
-                INSERT INTO dictionary_items(form_group, parent_node, t_key, t_type, t_locale, t_value) 
-                VALUES('%s', '%s', '%s', '%s', '%s', '%s')
-            ''' % (self.cur_form_group, parent_node, node['name'], node_type, locale, node_label)
+                INSERT INTO dictionary_items(form_group, parent_node, t_key, t_type, t_locale, t_value)
+                VALUES(%s, %s, %s, %s, %s, %s)
+            '''
             with connections['mapped'].cursor() as cursor:
-                cursor.execute(insert_q)
+                try:
+                    cursor.execute(insert_q, (self.cur_form_group, parent_node, node['name'], node_type, locale, node_label))
+                except Exception as e:
+                    terminal.tprint(str(e), 'fail')
+                    sentry.captureException()
+                    raise
 
             if 'type' in node:
                 if node['type'] == 'select one' or node['type'] == 'select all that apply':
@@ -1667,6 +1672,16 @@ class OdkForms():
 
         # Re-enable the checks
         cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
+
+        # truncate the processing errors too
+        with connection.cursor() as cursor1:
+            try:
+                cursor1.execute('TRUNCATE processing_errors')
+            except Exception as e:
+                top_error = True
+                all_comments.append(str(e))
+                terminal.tprint('\t%s' % str(e), 'fail')
+                sentry.captureException()
 
         return top_error, all_comments
 
