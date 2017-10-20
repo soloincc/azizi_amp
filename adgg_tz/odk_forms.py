@@ -1,4 +1,4 @@
-import requests, re, os
+import requests, re, os, collections
 import logging, traceback, json
 import copy
 import subprocess
@@ -744,16 +744,21 @@ class OdkForms():
 
         for key, value in node.iteritems():
             # clean the key
-            # if re.search("ai", key) is not None:
+            # if re.search("sex", key) is not None:
             #     terminal.tprint(key, 'ok')
             clean_key = self.clean_json_key(key)
             if clean_key == '_geolocation':
                 continue
 
-            # terminal.tprint("\t"+clean_key, 'okblue')
+            is_json = True
+            val_type = self.determine_type(value)
+            terminal.tprint("\t\t%s is of %s" % (clean_key, val_type), 'warn')
+
             if nodes_of_interest is not None:
                 if clean_key not in nodes_of_interest:
-                    continue
+                    # the key is not in the nodes of interest, check if we have a json data structure before dismissing it entirely
+                    if val_type != 'is_list' and val_type != 'is_json':
+                        continue
 
             # add this key to the sheet name
             if clean_key not in self.output_structure[sheet_name]:
@@ -762,11 +767,9 @@ class OdkForms():
             if clean_key in self.country_qsts:
                 value = self.get_clean_country_code(value)
 
-            is_json = True
-            val_type = self.determine_type(value)
-
             if val_type == 'is_list':
-                value = self.process_list(value, clean_key, node['unique_id'])
+                terminal.tprint(json.dumps(node), 'fail')
+                value = self.process_list(value, clean_key, node['unique_id'] if ('unique_id' in node) else clean_key)
                 is_json = False
             elif val_type == 'is_json':
                 is_json = True
@@ -782,7 +785,7 @@ class OdkForms():
                 is_json = False
 
             if is_json is True:
-                node_value = self.process_node(value, clean_key, nodes_of_interest)
+                node_value = self.process_node(value, clean_key, nodes_of_interest, add_top_id)
                 cur_node[clean_key] = node_value
             else:
                 node_value = value
@@ -1078,7 +1081,7 @@ class OdkForms():
             mapping = json.loads(request.POST['mapping'])
             # delete the actual view itself
             cur_mapping = FormMappings.objects.get(id=mapping['mapping_id'])
-            if mapping['regex_validator'] is not None:
+            if mapping['regex_validator'] is not None and mapping['regex_validator'] != '':
                 try:
                     re.compile(mapping['regex_validator'])
                 except re.error:
@@ -1149,19 +1152,22 @@ class OdkForms():
         Validate the mappings and ensure all mandatory fields have been mapped
         '''
         # get all the mapped tables
-        terminal.tprint('Beginning the process of validating the mapped tables', 'okblue')
-        mapped_tables = list(FormMappings.objects.values('dest_table_name').distinct())
+        form_groups = list(FormMappings.objects.values('form_group').distinct())
+
         is_fully_mapped = True
         is_mapping_valid = True
         comments = []
-        self.validated_tables = []
-        self.tables_being_validated = []
+        for form_group in form_groups:
+            terminal.tprint("Beginning form group '%s' validation" % form_group['form_group'], 'okblue')
+            mapped_tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
+            self.validated_tables = []
+            self.tables_being_validated = []
 
-        for table in mapped_tables:
-            (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(table['dest_table_name'])
-            is_fully_mapped = is_fully_mapped and is_table_fully_mapped
-            is_mapping_valid = is_mapping_valid and is_table_mapping_valid
-            comments.extend(table_comments)
+            for table in mapped_tables:
+                (is_table_fully_mapped, is_table_mapping_valid, table_comments) = self.validate_mapped_table(table['dest_table_name'])
+                is_fully_mapped = is_fully_mapped and is_table_fully_mapped
+                is_mapping_valid = is_mapping_valid and is_table_mapping_valid
+                comments.extend(table_comments)
 
         return is_fully_mapped, is_mapping_valid, comments
 
@@ -1284,7 +1290,7 @@ class OdkForms():
 
         for form_group in form_groups:
             terminal.tprint("Generating queries for the table '%s'" % form_group['form_group'], 'debug')
-            self.cur_group_queries = {}
+            self.cur_group_queries = collections.OrderedDict()
             self.all_foreign_keys = defaultdict(dict)
             tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
             for table in tables:
@@ -1331,29 +1337,29 @@ class OdkForms():
         dup_columns_sources = []
         source_datapoints = []
 
-        self.cur_group_queries[table] = defaultdict(dict)
-        self.cur_group_queries[table]['columns'] = defaultdict(dict)
-        self.cur_group_queries[table]['dup_check'] = defaultdict(dict)
+        cur_table_group = defaultdict(dict)
+        cur_table_group['columns'] = defaultdict(dict)
+        cur_table_group['dup_check'] = defaultdict(dict)
 
         for mapping in mappings:
             terminal.tprint("\t\t\tProcessing the mapping: '%s' - '%s' - '%s' - '%s' - '%s'" % (mapping['form_group'], mapping['form_question'], mapping['odk_question_type'], mapping['dest_table_name'], mapping['dest_column_name']), 'warn')
             if mapping['dest_column_name'] in mapped_columns:
                 # we have a scenario where 2 data
-                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['has_multiple_sources'] = True
-                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['sources'].append(mapping['form_question'])
+                cur_table_group['columns'][mapping['dest_column_name']]['has_multiple_sources'] = True
+                cur_table_group['columns'][mapping['dest_column_name']]['sources'].append(mapping['form_question'])
                 source_datapoints.append(mapping['form_question'])
                 continue
 
             if mapping['odk_question_type'] == 'geopoint':
-                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['is_geopoint'] = True
+                cur_table_group['columns'][mapping['dest_column_name']]['is_geopoint'] = True
 
             if mapping['ref_table_name'] is not None:
-                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['is_foreign_key'] = True
-                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['ref_table_name'] = mapping['ref_table_name']
-                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['ref_column_name'] = mapping['ref_column_name']
+                cur_table_group['columns'][mapping['dest_column_name']]['is_foreign_key'] = True
+                cur_table_group['columns'][mapping['dest_column_name']]['ref_table_name'] = mapping['ref_table_name']
+                cur_table_group['columns'][mapping['dest_column_name']]['ref_column_name'] = mapping['ref_column_name']
 
             if mapping['validation_regex'] is not None:
-                self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['regex'] = mapping['validation_regex']
+                cur_table_group['columns'][mapping['dest_column_name']]['regex'] = mapping['validation_regex']
 
             if mapping['is_record_identifier']:
                 dc = "%s=%%s" % mapping['dest_column_name']
@@ -1376,8 +1382,9 @@ class OdkForms():
 
             mapped_columns.append(mapping['dest_column_name'])
             source_datapoints.append(mapping['form_question'])
-            self.cur_group_queries[table]['columns'][mapping['dest_column_name']]['sources'] = [mapping['form_question']]
+            cur_table_group['columns'][mapping['dest_column_name']]['sources'] = [mapping['form_question']]
 
+        self.cur_group_queries[table] = cur_table_group
         # get all foreign keys on this table
         all_fks = self.get_all_foreign_keys(table)
         if len(all_fks) != 0:
@@ -1489,18 +1496,19 @@ class OdkForms():
         for table, cur_group in self.cur_group_queries.iteritems():
             self.output_structure[table] = ['unique_id']
             self.cur_fk[table] = []
+            self.indexes = {}
             nodes = cur_group['source_datapoints']
             if 'instanceID' not in nodes:
                 nodes.append('instanceID')
-            # terminal.tprint('\t%s' % json.dumps(self.cur_fk), 'warn')
-            # terminal.tprint('\t%s' % data[1], 'okblue')
+            terminal.tprint('\t%s' % json.dumps(nodes), 'warn')
+            terminal.tprint('\t%s' % data[1], 'ok')
             nodes_data = self.process_node(json.loads(data[1]), table, nodes, False)
-            # terminal.tprint('\t%s' % json.dumps(nodes_data), 'okblue')
+            terminal.tprint('\t%s' % json.dumps(nodes_data), 'okblue')
 
             try:
                 (data_points, dup_data_points) = self.populate_query(cur_group, nodes_data)
                 final_query = cur_group['query'] % tuple(data_points)
-                terminal.tprint('\tFinal query: %s' % final_query, 'ok')
+                # terminal.tprint('\tFinal query: %s' % final_query, 'ok')
             except ValueError as e:
                 terminal.tprint('\t%s' % str(e), 'fail')
                 self.create_error_log_entry('data_error', str(e), nodes_data['instanceID'], None)
@@ -1563,10 +1571,10 @@ class OdkForms():
                 node_data = self.process_muliple_source_node(col, source_node, q_data)
             elif 'regex' in source_node:
                 # the data is only coming from one source and we have a regex defined
-                self.validate_data_point(source_node['regex'], q_data[source_node['sources'][0]], source_node['sources'][0])
+                node_data = self.validate_data_point(source_node['regex'], q_data[source_node['sources'][0]], source_node['sources'][0])
 
-            if 'is_geopoint' in source_node:
-                node_data = self.process_geopoint_node(col, source_node['sources'], q_data)
+            # if 'is_geopoint' in source_node:
+            #     node_data = self.process_geopoint_node(col, source_node['sources'], q_data)
             if is_foreign_key:
                 # we need to get the foreign key to this. It must have been processed and saved already
                 # terminal.tprint(json.dumps(self.cur_fk), 'warn')
@@ -1641,14 +1649,16 @@ class OdkForms():
 
     def validate_data_point(self, regex, data, column):
         try:
-            m = re.search(r'%s' % regex, data)
-            if m is None:
+            m = re.findall(r'%s' % regex, data)
+            if len(m) == 0:
                 raise ValueError("Invalid Data - Column '%s': Found '%s' which does not match the validation criteria '%s' defined" % (column, data, regex))
-        except ValueError as e:
+        except ValueError:
             raise
-        except Exception as e:
+        except Exception:
             sentry.captureException()
             raise
+
+        return m[0]
 
     def delete_processed_data(self):
         form_groups = list(FormMappings.objects.values('form_group').distinct())

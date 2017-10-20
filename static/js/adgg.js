@@ -786,7 +786,7 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
         {'name': 'dest_table_name', 'title': 'Dest Table'},
         {'name': 'dest_column_name', 'title': 'Dest Column'},
         {'name': 'db_question_type', 'title': 'Dest Type'},
-        {'name': 'validation_regex', 'title': 'Validation REGEX'},
+        {'name': 'validation_regex', 'title': 'Validation REGEX', 'width': '120px'},
         {'name': 'is_record_identifier', 'title': 'Is Identifier'},
         // {'name': 'structure', 'title': 'View Structure'}
     ];
@@ -836,7 +836,7 @@ BadiliDash.prototype.submitMappingEdits = function(e){
         values = {
             mapping_id: $editor.find('#mapping_id').val(),
             regex_validator: $editor.find('#regex_validator').val(),
-            is_record_id: $editor.find('[name=is_record_id]').val() == 'yes' ? true : false
+            is_record_id: $editor.find('[name=is_record_id]:checked').val() == 'yes' ? true : false
         };
 
     $('#spinnermModal').modal('show');
