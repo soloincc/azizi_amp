@@ -182,6 +182,7 @@ class FormMappings(BaseTable):
     ref_column_name = models.CharField(max_length=50, null=True)
     validation_regex = models.CharField(max_length=100, null=True)
     is_record_identifier = models.BooleanField(default=False)
+    is_null = models.SmallIntegerField(null=True)
 
     class Meta:
         unique_together = ('form_group', 'form_question', 'dest_table_name', 'dest_column_name')
