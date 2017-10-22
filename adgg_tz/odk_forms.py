@@ -953,11 +953,6 @@ class OdkForms():
             sentry.captureException()
             return code
 
-    def process_single_submission(self, node, watch_list):
-        # given a node full of submission and a watchlist,
-        # retrieve the datasets whose key is in the watchlist
-        return node
-
     def process_curl_request(self, url):
         """
         Create and execute a curl request
@@ -2002,15 +1997,16 @@ class OdkForms():
         return to_return
 
     def save_json_edits(self, err_id, json_data):
+        terminal.tprint(json.dumps(json_data), 'fail')
         try:
-            cur_error = ProcessingErrors.objects.get(id=err_id)
+            cur_error = list(ProcessingErrors.objects.filter(id=err_id).values('data_uuid'))[0] 
         except Exception as e:
             terminal.tprint("\tError! Couldn't find the defined processing error with id %s. \n\t%s" % (err_id, str(e)), 'fail')
             return True, "Could not find the defined processing error."
 
         # if the uuid has the string uuid, remove it
-        if re.match('^uuid', cur_error.data_uuid):
-            m = re.findall("^uuid\:(.+)$", cur_error.data_uuid)
+        if re.match('^uuid', cur_error['data_uuid']):
+            m = re.findall("^uuid\:(.+)$", cur_error['data_uuid'])
             uuid = m[0]
         else:
             uuid = cur_error['data_uuid']
@@ -2023,16 +2019,17 @@ class OdkForms():
 
         return False, "The submission has been saved successfully."
 
+
     def process_single_submission(self, err_id):
         try:
-            cur_error = ProcessingErrors.objects.get(id=err_id)
+            cur_error = list(ProcessingErrors.objects.filter(id=err_id).values('data_uuid'))[0] 
         except Exception as e:
             terminal.tprint("\tError! Couldn't find the defined processing error with id %s. \n\t%s" % (err_id, str(e)), 'fail')
             return True, "Could not find the defined processing error."
 
         # if the uuid has the string uuid, remove it
-        if re.match('^uuid', cur_error.data_uuid):
-            m = re.findall("^uuid\:(.+)$", cur_error.data_uuid)
+        if re.match('^uuid', cur_error['data_uuid']):
+            m = re.findall("^uuid\:(.+)$", cur_error['data_uuid'])
             uuid = m[0]
         else:
             uuid = cur_error['data_uuid']

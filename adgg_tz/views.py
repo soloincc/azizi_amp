@@ -411,7 +411,7 @@ def first_level_geojson(request):
 def save_json_edits(request):
     err_id = json.loads(request.POST['err_id'])
     odk = OdkForms()
-    (is_error, cur_error) = odk.save_json_edits(err_id, request.POST['json_data'])
+    (is_error, cur_error) = odk.save_json_edits(err_id, json.loads(request.POST['json_data']))
 
     to_return = {'error': is_error, 'message': cur_error}
     return return_json(to_return)
