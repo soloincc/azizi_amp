@@ -1413,7 +1413,7 @@ class OdkForms():
         if len(all_fks) != 0:
             self.all_foreign_keys[table] = all_fks
             for cur_fk in all_fks:
-                terminal.tprint('\tLinked table %s' % cur_fk['fk_table'], 'ok')
+                terminal.tprint('\tLinked column %s:%s to %s:%s' % (table, cur_fk['col'], cur_fk['fk_table'], cur_fk['ref_col']), 'ok')
                 add_to_query = False
                 if cur_fk['fk_table'] in self.cur_group_queries:
                     terminal.tprint('\tWe have found a linked table "%s" which needs to be added to the query' % cur_fk['fk_table'], 'okblue')
@@ -1429,6 +1429,18 @@ class OdkForms():
                             add_to_query = True
                         except Exception:
                             raise
+                    else:
+                        # we have a linked table which we don't know where the data should come from and is not in the current mapping. Most probably we are linking different form groups
+                        # If the column is mapped to a data source, it most likely means that we need to create this linkage
+                        terminal.tprint('\t\tWe have a linked table and we have data for use in the linkage column. Need to create a query to fetch the linked data', 'okblue')
+                        cur_table_group['columns'][cur_fk['col']]['is_linked'] = True
+                        unique_cols = self.get_all_unique_cols(cur_fk['fk_table'])
+                        if len(unique_cols) == 0:
+                            mssg = "\t\tWe have a linked table, but the table '%s' don't have unique keys that can be used to filter the data. Exiting now..." % cur_fk['table']
+                            terminal.tprint(mssg, 'fail')
+                            raise Exception(mssg)
+
+                        cur_table_group['columns'][cur_fk['col']]['linkage'] = {'table': cur_fk['fk_table'], 'col': cur_fk['ref_col'], 'unique_cols': unique_cols}
 
                 if add_to_query:
                     column_names = "%s, %s" % (column_names, cur_fk['col'])
@@ -1472,20 +1484,15 @@ class OdkForms():
     def process_form_group_data(self, form_group, is_dry_run):
         terminal.tprint("\n\nProcessing the data for form group '%s'" % form_group.group_name, 'okblue')
         comments = []
-        print form_group.group_name
-        print form_group.order_index
-        print form_group.id
         odk_form = list(ODKForm.objects.filter(form_group=form_group.id).values('id', 'form_id'))[0]
-        # terminal.tprint(json.dumps(odk_form), 'ok')
-        print 'wtf'
-        # odk_form = list(ODKForm.objects.all())[0]
-        # odk_form = list(ODKForm.objects.all())
-        # terminal.tprint(json.dumps(odk_form), 'ok')
 
         all_nodes = []
         for (group_name, cur_group) in self.cur_group_queries.iteritems():
             all_nodes = copy.deepcopy(all_nodes) + copy.deepcopy(cur_group['source_datapoints'])
 
+        # if we dont have the instance id in the nodes list, include it
+        if 'instanceID' not in all_nodes:
+            all_nodes.append('instanceID')
         terminal.tprint(json.dumps(all_nodes), 'fail')
         all_instances = self.fetch_merge_data(odk_form['form_id'], all_nodes, None, 'submissions', None)
         # terminal.tprint(json.dumps(all_instances), 'warn')
@@ -1495,9 +1502,10 @@ class OdkForms():
         with connections['mapped'].cursor():
             # start a transaction
             for cur_instance in all_instances:
-                if i > settings.DRY_RUN_RECORDS:
-                    break
-                # terminal.tprint(json.dumps(cur_instance), 'warn')
+                if is_dry_run:
+                    if i > settings.DRY_RUN_RECORDS:
+                        break
+
                 transaction.set_autocommit(False)
                 try:
                     self.save_instance_data(cur_instance, is_dry_run)
@@ -1541,6 +1549,20 @@ class OdkForms():
                         all_fks.append({'fk_table': is_foreign_key[1], 'col': dest_column[0], 'ref_col': is_foreign_key[2]})
         return all_fks
 
+    def get_all_unique_cols(self, table):
+        terminal.tprint('\t\tFetching all unique keys for the table %s' % table, 'okblue')
+        all_unique = []
+        with connections['mapped'].cursor() as mapped_cursor:
+            dest_columns_q = 'DESC %s' % table
+            mapped_cursor.execute(dest_columns_q)
+            dest_columns = mapped_cursor.fetchall()
+
+            for dest_column in dest_columns:
+                # determine if we have a unique key
+                if dest_column[3] == 'UNI':
+                    all_unique.append(dest_column[0])
+        return all_unique
+
     def save_instance_data(self, data, is_dry_run):
         # start the process of saving this instance data
         # the output_structure is required by the process_node function, but we are not using it here, just keep it
@@ -1556,14 +1578,14 @@ class OdkForms():
             cur_dataset[table] = formatted
 
             for nodes_data in formatted:
-                terminal.tprint('\t%s: %s' % (table, json.dumps(nodes_data)), 'warn')
+                # terminal.tprint('\t%s: %s' % (table, json.dumps(nodes_data)), 'warn')
                 try:
-                    (data_points, dup_data_points) = self.populate_query(cur_group, nodes_data)
+                    (data_points, dup_data_points) = self.populate_query(cur_group, nodes_data, data['instanceID'])
                     final_query = cur_group['query'] % tuple(data_points)
-                    terminal.tprint('\tFinal query: %s' % final_query, 'ok')
+                    # terminal.tprint('\tFinal query: %s' % final_query, 'ok')
                 except ValueError as e:
                     terminal.tprint('\t%s' % str(e), 'fail')
-                    self.create_error_log_entry('data_error', str(e), nodes_data['instanceID'], None)
+                    self.create_error_log_entry('data_error', str(e), data['instanceID'], None)
                     raise ValueError(str(e))
                 except Exception as e:
                     terminal.tprint('\tI dont know this error "%s". Re-raising it.' % str(e), 'fail')
@@ -1587,10 +1609,11 @@ class OdkForms():
                     inserted_data = cursor.fetchone()
                     if inserted_data is None:
                         # We have a real duplicate data, this is not a logic error but a problem with the source data
-                        self.create_error_log_entry('duplicate', str(e), nodes_data['instanceID'], duplicate_query)
+                        self.create_error_log_entry('duplicate', str(e), data['instanceID'], duplicate_query)
                         continue
                     self.cur_fk[table].append(inserted_data[0])
                 except Exception as e:
+                    self.create_error_log_entry('unknown', str(e), data['instanceID'], cur_group['query'])
                     terminal.tprint('\tI dont know this error "%s". Re-raising it.' % str(e), 'fail')
                     sentry.captureException()
                     raise
@@ -1636,7 +1659,7 @@ class OdkForms():
 
         return all_nodes
 
-    def populate_query(self, q_meta, q_data):
+    def populate_query(self, q_meta, q_data, instanceID):
         data_points = []
         dup_data_points = []
         for col in q_meta['dest_columns']:
@@ -1666,6 +1689,36 @@ class OdkForms():
 
             # if 'is_geopoint' in source_node:
             #     node_data = self.process_geopoint_node(col, source_node['sources'], q_data)
+            if 'is_linked' in source_node:
+                # we need to fetch this node data from another table
+                where_criteria = ''
+                no_repeats = 0
+                for criteria in source_node['linkage']['unique_cols']:
+                    this_criteria = '%s=%%s' % criteria
+                    where_criteria = '%s or %s' % (where_criteria, this_criteria) if where_criteria != '' else this_criteria
+                    no_repeats += 1
+
+                fetch_query = 'SELECT %s FROM %s WHERE %s' % (source_node['linkage']['col'], source_node['linkage']['table'], where_criteria)
+
+                cursor = connections['mapped'].cursor()
+                try:
+                    cursor.execute(fetch_query, [q_data[source_node['sources'][0]]] * no_repeats)
+                    linked_data = cursor.fetchall()
+                    if len(linked_data) == 0:
+                        terminal.tprint(json.dumps(q_data), 'fail')
+                        mssg = "\tI couldn't find the corresponding dataset in column '%s:%s' for the value '%s'. The linkage cannot happen.\n\tQuery: %s" % (source_node['linkage']['table'], source_node['linkage']['col'], q_data[source_node['sources'][0]], fetch_query)
+                        self.create_error_log_entry('data_error', mssg, instanceID, None)
+                        raise ValueError(mssg)
+                    elif len(linked_data) > 1:
+                        mssg = "\tI found multiple corresponding datasets in column '%s:%s' for the value '%s'. The linkage is ambigous.\n\tQuery: %s" % (source_node['linkage']['table'], source_node['linkage']['col'], q_data[source_node['sources'][0]], fetch_query)
+                        self.create_error_log_entry('data_error', mssg, instanceID, None)
+                        raise ValueError(mssg)
+                    node_data = linked_data[0]
+                except Exception as e:
+                    terminal.tprint('\tError while fetching the linked data. "%s"' % str(e), 'fail')
+                    sentry.captureException()
+                    raise
+
             if is_foreign_key:
                 # we need to get the foreign key to this. It must have been processed and saved already
                 # terminal.tprint(json.dumps(self.cur_fk), 'warn')
