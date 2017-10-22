@@ -1881,18 +1881,19 @@ class OdkForms():
 
         return None
 
-    def create_error_log_entry(self, type, err_message, uuid, comments):
+    def create_error_log_entry(self, e_type, err_message, uuid, comments):
         comments = '' if comments is None else comments
         try:
             proc_err = ProcessingErrors(
-                err_code=settings.ERR_CODES[type]['CODE'],
+                err_code=settings.ERR_CODES[e_type]['CODE'],
                 err_message=err_message,
                 data_uuid=uuid,
-                err_comments=comments
+                err_comments=comments,
+                is_resolved=0
             )
             proc_err.publish()
         except Exception as e:
-            mssg = '%s, %s, "%s" %s %s' % (str(e), type, err_message, uuid, comments)
+            mssg = '%s, %s, "%s" %s %s' % (str(e), e_type, err_message, uuid, comments)
             terminal.tprint(mssg, 'fail')
             sentry.captureException()
             raise Exception(mssg)
