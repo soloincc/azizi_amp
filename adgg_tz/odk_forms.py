@@ -4,6 +4,7 @@ import copy
 import subprocess
 import hashlib
 import dateutil.parser
+import math
 
 from ConfigParser import ConfigParser
 from datetime import datetime
@@ -2019,6 +2020,45 @@ class OdkForms():
 
         return False, "The submission has been saved successfully."
 
+    def fetch_processing_status(self, cur_page, per_page, offset, sorts, queries):
+        """
+        @todo: Proper pagination of the results
+        """
+        with connection.cursor() as cursor:
+            form_details_q = 'SELECT b.form_id, b.form_name, c.group_name, a.is_processed, count(*) as r_count FROM raw_submissions as a INNER JOIN odkform as b on a.form_id=b.id INNER JOIN form_groups as c on b.form_group_id=c.id GROUP BY b.id, a.is_processed ORDER BY c.group_name, b.form_id, a.is_processed'
+            cursor.execute(form_details_q)
+            form_details = self.dictfetchall(cursor)
+
+            to_return = {}
+            for res in form_details:
+                if res['form_id'] not in to_return:
+                    to_return[res['form_id']] = {
+                        'form_id': res['form_id'],
+                        'form_name': res['form_name'],
+                        'form_group': res['group_name'],
+                        'no_submissions': 0,
+                        'no_processed': res['r_count'] if res['is_processed'] == 1 else 0,
+                        'unprocessed': res['r_count'] if res['is_processed'] == 0 else 0
+                    }
+                else:
+                    if res['is_processed'] == 1:
+                        to_return[res['form_id']]['no_processed'] += res['r_count']
+                    elif res['is_processed'] == 0:
+                        to_return[res['form_id']]['unprocessed'] += res['r_count']
+
+                to_return[res['form_id']]['no_submissions'] += res['r_count']
+
+        return_this = []
+        for form_id, details in to_return.iteritems():
+            print details
+            # "{0:0.2f}".format(loc[1])
+            # details['perc_error'] = "{:.2f}".format(((details['no_submissions'] - details['no_processed']) / details['no_submissions']) * 100)
+            # details['perc_error'] = int(details['unprocessed']) / int(details['no_submissions'])
+            details['perc_error'] = details['unprocessed']
+            # details['perc_error'] = 3
+            return_this.append(details)
+
+        return False, {'records': return_this, "queryRecordCount": len(return_this), "totalRecordCount": len(return_this)}
 
     def process_single_submission(self, err_id):
         try:

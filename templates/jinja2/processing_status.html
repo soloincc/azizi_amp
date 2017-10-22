@@ -1,0 +1,51 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/dynatable/jquery.dynatable.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+    
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+
+    <div class="wrapper wrapper-content animated fadeInRight">
+        <div class='row'>
+            <div class='col-lg-12' id='error_table'>
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>Processing Status</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <table id='processing_status' class='table'>
+                          <thead>
+                            <th data-dynatable-column="form_id">ID</th>
+                            <th data-dynatable-column="form_group">Form Group</th>
+                            <th data-dynatable-column="form_name">Form Name</th>
+                            <th data-dynatable-column="no_submissions"># Submissions</th>
+                            <th data-dynatable-column="no_processed"># Processed</th>
+                            <th data-dynatable-column="perc_error">Errors</th>
+                          </thead>
+                          <tbody>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcore.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxnotification.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/dynatable/jquery.dynatable.js') }}"></script>
+    
+    <script type='text/javascript' src="{{ static('js/adgg.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+            BadiliDash.data = {};
+            dash.initiateProcessingStatus();
+        });
+    </script>
+</div>
+
+{% endblock %}

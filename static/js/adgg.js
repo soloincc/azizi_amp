@@ -1244,4 +1244,18 @@ BadiliDash.prototype.processCurSubmission = function(){
     });
 };
 
+BadiliDash.prototype.initiateProcessingStatus = function(){
+    dash.error_table = $('#processing_status').dynatable({
+      dataset: {
+        paginate: true,
+        recordCount: true,
+        sorting: true,
+        ajax: true,
+        ajaxUrl: '/fetch_processing_status/',
+        ajaxOnLoad: true,
+        records: []
+      }
+    });
+};
+
 var dash = new BadiliDash();

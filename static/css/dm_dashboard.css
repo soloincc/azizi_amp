@@ -37,7 +37,7 @@ body { margin: 0;   padding: 0;  min-width: 900px; }
 #mapping_comments{max-height: 250px; overflow-y: scroll;}
 #mapping_comments .alert{ padding: 0px; }
 
-#processing_errors th a{ color: #337ab7; }
+#processing_errors th a, #processing_status th a{ color: #337ab7; }
 
 #edit_raw_json{ max-height: 500px; overflow-y: auto; }
 

@@ -426,6 +426,32 @@ def process_single_submission(request):
     return return_json(to_return)
 
 
+def processing_status(request):
+    csrf_token = get_or_create_csrf_token(request)
+    page_settings = {
+        'page_title': "%s | Processing Status" % settings.SITE_NAME,
+        'csrf_token': csrf_token,
+        'section_title': 'Processing Status'
+    }
+    return render(request, 'processing_status.html', page_settings)
+
+
+def fetch_processing_status(request):
+    cur_page = json.loads(request.GET['page'])
+    per_page = json.loads(request.GET['perPage'])
+    offset = json.loads(request.GET['offset'])
+    sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
+    queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
+
+    odk = OdkForms()
+    (is_success, proc_errors) = odk.fetch_processing_status(cur_page, per_page, offset, sorts, queries)
+    to_return = json.dumps(proc_errors)
+
+    response = HttpResponse(to_return, content_type='text/json')
+    response['Content-Message'] = to_return
+    return response
+
+
 def zip_response(json_data):
     gzip_buffer = IO()
     gzip_file = gzip.GzipFile(mode='wb', fileobj=gzip_buffer)
