@@ -156,13 +156,20 @@ class OdkForms():
 
         return to_return
 
-    def get_all_submissions(self, form_id):
+    def get_all_submissions(self, form_id, uuids=None):
         """
-        Given a form id, get all the submitted data
+        Given a form id or the uuids, get all the submitted data
         """
         try:
             # the form_id used in odk_forms and submissions is totally different
             odk_form = ODKForm.objects.get(form_id=form_id)
+
+            if uuids is not None:
+                terminal.tprint('\tWe are only interested in data already saved and we have their uuids', 'ok')
+                # we are only interested in data already saved and we have their uuids
+                submissions = RawSubmissions.objects.filter(uuid__in=uuids).filter(form_id=odk_form.id).values('raw_data')
+                return submissions
+
             submissions = RawSubmissions.objects.filter(form_id=odk_form.id).values('raw_data')
             submitted_instances = self.online_submissions_count(form_id)
 
@@ -171,7 +178,7 @@ class OdkForms():
                 # There was an error while fetching the submissions, use 0 as submitted_instances
                 submitted_instances = 0
 
-            terminal.tprint('\t%d -- %d' % (submissions.count(), submitted_instances), 'okblue')
+            terminal.tprint('\t%s: Saved submissions "%d" vs Submitted submissions "%d"' % (odk_form.form_name, submissions.count(), submitted_instances), 'okblue')
             if submissions.count() == 0 and submitted_instances == 0:
                 logger.info('There are no submissions to process')
                 terminal.tprint('No submisions to process', 'fail')
@@ -187,6 +194,8 @@ class OdkForms():
 
                 for uuid in submission_uuids:
                     # check if the current uuid is saved in the database
+                    # print odk_form.id
+                    # print uuid['_uuid']
                     cur_submission = RawSubmissions.objects.filter(form_id=odk_form.id, uuid=uuid['_uuid'])
                     if cur_submission.count() == 0:
                         # the current submission is not saved in the database, so fetch and save it...
@@ -217,7 +226,6 @@ class OdkForms():
                 terminal.tprint("\tAll submissions for '%s' are already saved in the database" % odk_form.form_name, 'info')
 
         except Exception as e:
-            logger.error('Some error....')
             logger.error(str(e))
             terminal.tprint(str(e), 'error')
             sentry.captureException()
@@ -227,7 +235,7 @@ class OdkForms():
 
     def online_submissions_count(self, form_id):
         # given a form id, process the number of submitted instances
-        terminal.tprint("\tComputing the number of submissions of the form with id '%s'" % form_id, 'info')
+        # terminal.tprint("\tComputing the number of submissions of the form with id '%s'" % form_id, 'info')
         url = "%s%s%d?%s" % (self.server, self.form_stats, form_id, "group=&name=time")
         stats = self.process_curl_request(url)
 
@@ -602,7 +610,7 @@ class OdkForms():
         db_name = db_name.replace('.', '_')
         return db_name
 
-    def fetch_merge_data(self, form_id, nodes, d_format, download_type, view_name):
+    def fetch_merge_data(self, form_id, nodes, d_format, download_type, view_name, uuids=None):
         """
         Given a form id and nodes of interest, get data from all associated forms
         """
@@ -646,7 +654,7 @@ class OdkForms():
 
         for form_id in associated_forms:
             try:
-                this_submissions = self.get_form_submissions_as_json(int(form_id), nodes)
+                this_submissions = self.get_form_submissions_as_json(int(form_id), nodes, uuids)
             except Exception as e:
                 logging.debug(traceback.format_exc())
                 logging.error(str(e))
@@ -688,17 +696,18 @@ class OdkForms():
         writer = ExcelWriter(filename)
         writer.create_workbook(submissions, structure)
 
-    def get_form_submissions_as_json(self, form_id, screen_nodes):
+    def get_form_submissions_as_json(self, form_id, screen_nodes, uuids=None):
         # given a form id get the form submissions
         # if the screen_nodes is given, process and return only the subset of data in those forms
 
-        submissions_list = self.get_all_submissions(form_id)
+        submissions_list = self.get_all_submissions(form_id, uuids)
+        # terminal.tprint(json.dumps(submissions_list), 'fail')
 
         if submissions_list is None or submissions_list.count() == 0:
             terminal.tprint("The form with id '%s' has no submissions returning as such" % str(form_id), 'fail')
             return None
 
-        print submissions_list.count()
+        # print submissions_list.count()
         # get the form metadata
         settings = ConfigParser()
         settings.read(self.forms_settings)
@@ -730,6 +739,7 @@ class OdkForms():
             pk_key = self.pk_name + str(self.indexes['main'])
             if self.determine_type(data) == 'is_json':
                 data = json.loads(data['raw_data'])
+            # print data
             data['unique_id'] = pk_key
             data = self.process_node(data, 'main', screen_nodes, False)
 
@@ -1298,7 +1308,7 @@ class OdkForms():
                 dest_table = FormMappings(table_name=table)
                 dest_table.publish()
 
-    def manual_process_data(self, is_dry_run):
+    def manual_process_data(self, is_dry_run, submissions=None):
         # initiate the process of manually processing the data
         # 1. Get the form groups involved in the mapping
         # 2. For each form group, get all the tables which have been mapped
@@ -1323,7 +1333,7 @@ class OdkForms():
 
             terminal.tprint('\t%s' % json.dumps(self.cur_group_queries), 'warn')
             try:
-                (is_error, comments) = self.process_form_group_data(form_group, is_dry_run)
+                (is_error, comments) = self.process_form_group_data(form_group, is_dry_run, submissions)
                 all_comments = copy.deepcopy(all_comments) + copy.deepcopy(comments)
                 top_error = top_error or is_error
             except Exception as e:
@@ -1361,7 +1371,7 @@ class OdkForms():
         cur_table_group['dup_check'] = defaultdict(dict)
 
         for mapping in mappings:
-            terminal.tprint("\t\t\tProcessing the mapping: '%s' - '%s' - '%s' - '%s' - '%s'" % (mapping['form_group'], mapping['form_question'], mapping['odk_question_type'], mapping['dest_table_name'], mapping['dest_column_name']), 'warn')
+            # terminal.tprint("\t\t\tProcessing the mapping: '%s' - '%s' - '%s' - '%s' - '%s'" % (mapping['form_group'], mapping['form_question'], mapping['odk_question_type'], mapping['dest_table_name'], mapping['dest_column_name']), 'warn')
             if mapping['dest_column_name'] in mapped_columns:
                 # we have a scenario where 2 data
                 cur_table_group['columns'][mapping['dest_column_name']]['has_multiple_sources'] = True
@@ -1481,7 +1491,7 @@ class OdkForms():
 
         return False
 
-    def process_form_group_data(self, form_group, is_dry_run):
+    def process_form_group_data(self, form_group, is_dry_run, submissions=None):
         terminal.tprint("\n\nProcessing the data for form group '%s'" % form_group.group_name, 'okblue')
         comments = []
         odk_form = list(ODKForm.objects.filter(form_group=form_group.id).values('id', 'form_id'))[0]
@@ -1493,8 +1503,13 @@ class OdkForms():
         # if we dont have the instance id in the nodes list, include it
         if 'instanceID' not in all_nodes:
             all_nodes.append('instanceID')
-        terminal.tprint(json.dumps(all_nodes), 'fail')
-        all_instances = self.fetch_merge_data(odk_form['form_id'], all_nodes, None, 'submissions', None)
+        # terminal.tprint(json.dumps(all_nodes), 'fail')
+        if submissions is not None:
+            terminal.tprint('\tWe have a list of submissions that we need to process manually', 'okblue')
+            all_instances = self.fetch_merge_data(odk_form['form_id'], all_nodes, None, 'submissions', None, submissions)
+            terminal.tprint(json.dumps(all_instances), 'warn')
+        else:
+            all_instances = self.fetch_merge_data(odk_form['form_id'], all_nodes, None, 'submissions', None, None)
         # terminal.tprint(json.dumps(all_instances), 'warn')
 
         is_error = False
@@ -1502,6 +1517,7 @@ class OdkForms():
         with connections['mapped'].cursor():
             # start a transaction
             for cur_instance in all_instances:
+                i += 1
                 if is_dry_run:
                     if i > settings.DRY_RUN_RECORDS:
                         break
@@ -1511,22 +1527,34 @@ class OdkForms():
                     self.save_instance_data(cur_instance, is_dry_run)
                 except ValueError as e:
                     comments.append('Value Error: %s' % str(e))
+                    continue
                     # is_error = True
                 except IntegrityError as e:
                     terminal.tprint('\tIntegrity Error: %s' % str(e), 'fail')
                     comments.append('\tIntegrity Error: %s' % str(e))
                     is_error = True
+                    continue
                 except Exception as e:
                     terminal.tprint('Error: %s' % str(e), 'fail')
                     comments.append('Error: %s' % str(e))
                     sentry.captureException()
                     is_error = True
+                    continue
 
                 if is_dry_run:
                     transaction.rollback()
                 else:
                     transaction.commit()
-                i += 1
+                    # update this record showing that this submission has been processed
+                    if re.search('uuid', cur_instance['instanceID']):
+                        m = re.findall(r'uuid\:(.+)', cur_instance['instanceID'])
+                        raw_subm = RawSubmissions.objects.get(uuid=m[0])
+                        raw_subm.is_processed = 1
+                        raw_subm.publish()
+                        terminal.tprint("\tThe submission '%s' has been processed successfully" % m[0], 'ok')
+
+            # revert the auto commit to true
+            transaction.set_autocommit(True)
 
         return is_error, comments
 
@@ -1613,7 +1641,7 @@ class OdkForms():
                         continue
                     self.cur_fk[table].append(inserted_data[0])
                 except Exception as e:
-                    self.create_error_log_entry('unknown', str(e), data['instanceID'], cur_group['query'])
+                    self.create_error_log_entry('unknown', str(e), data['instanceID'], 'Query: %s, Data: %s' % (cur_group['query'], json.dumps(tuple(data_points))))
                     terminal.tprint('\tI dont know this error "%s". Re-raising it.' % str(e), 'fail')
                     sentry.captureException()
                     raise
@@ -1839,6 +1867,8 @@ class OdkForms():
         with connection.cursor() as cursor1:
             try:
                 cursor1.execute('TRUNCATE processing_errors')
+                # update the is_processed field in the odk_form table
+                RawSubmissions.objects.filter(is_processed=1).update(is_processed=0)
             except Exception as e:
                 top_error = True
                 all_comments.append(str(e))
@@ -1883,6 +1913,11 @@ class OdkForms():
 
     def create_error_log_entry(self, e_type, err_message, uuid, comments):
         comments = '' if comments is None else comments
+
+        if re.match('^uuid', uuid):
+            m = re.findall("^uuid\:(.+)$", uuid)
+            uuid = m[0]
+
         try:
             proc_err = ProcessingErrors(
                 err_code=settings.ERR_CODES[e_type]['CODE'],
@@ -1965,6 +2000,46 @@ class OdkForms():
                 })
 
         return to_return
+
+    def save_json_edits(self, err_id, json_data):
+        try:
+            cur_error = ProcessingErrors.objects.get(id=err_id)
+        except Exception as e:
+            terminal.tprint("\tError! Couldn't find the defined processing error with id %s. \n\t%s" % (err_id, str(e)), 'fail')
+            return True, "Could not find the defined processing error."
+
+        # if the uuid has the string uuid, remove it
+        if re.match('^uuid', cur_error.data_uuid):
+            m = re.findall("^uuid\:(.+)$", cur_error.data_uuid)
+            uuid = m[0]
+        else:
+            uuid = cur_error['data_uuid']
+
+        # get the record with this uuid
+        subm = RawSubmissions.objects.get(uuid=uuid)
+        subm.raw_data = json_data
+        subm.is_modified = 1
+        subm.publish()
+
+        return False, "The submission has been saved successfully."
+
+    def process_single_submission(self, err_id):
+        try:
+            cur_error = ProcessingErrors.objects.get(id=err_id)
+        except Exception as e:
+            terminal.tprint("\tError! Couldn't find the defined processing error with id %s. \n\t%s" % (err_id, str(e)), 'fail')
+            return True, "Could not find the defined processing error."
+
+        # if the uuid has the string uuid, remove it
+        if re.match('^uuid', cur_error.data_uuid):
+            m = re.findall("^uuid\:(.+)$", cur_error.data_uuid)
+            uuid = m[0]
+        else:
+            uuid = cur_error['data_uuid']
+
+        (is_success, comments) = self.manual_process_data(False, [uuid])
+
+        return is_success, comments
 
 
 def auto_process_submissions():

@@ -86,6 +86,7 @@ class RawSubmissions(BaseTable):
     uuid = models.CharField(max_length=100, unique=True, db_index=True)
     submission_time = models.CharField(max_length=100)
     is_processed = models.BooleanField(default=0)
+    is_modified = models.BooleanField(default=0)
     raw_data = JSONField()
 
     class Meta:

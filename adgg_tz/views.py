@@ -408,6 +408,24 @@ def first_level_geojson(request):
     return HttpResponse(json.dumps(cur_polygons), content_type='application/json')
 
 
+def save_json_edits(request):
+    err_id = json.loads(request.POST['err_id'])
+    odk = OdkForms()
+    (is_error, cur_error) = odk.save_json_edits(err_id, request.POST['json_data'])
+
+    to_return = {'error': is_error, 'message': cur_error}
+    return return_json(to_return)
+
+
+def process_single_submission(request):
+    err_id = json.loads(request.POST['err_id'])
+    odk = OdkForms()
+    (is_error, cur_error) = odk.process_single_submission(err_id)
+
+    to_return = {'error': is_error, 'message': cur_error}
+    return return_json(to_return)
+
+
 def zip_response(json_data):
     gzip_buffer = IO()
     gzip_file = gzip.GzipFile(mode='wb', fileobj=gzip_buffer)

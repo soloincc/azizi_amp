@@ -137,6 +137,9 @@ function BadiliDash() {
     $('#dry_run').on('click', this.executeProcessingDryRun);
     $('#confirm_process_mappings').on('click', this.executeDataProcessor);
     $('#confirm_delete_data').on('click', this.clearProcessedData);
+    $('#confirm_save_edits').on('click', this.saveEditedJson);
+    $('#confirm_process_submission').on('click', this.processCurSubmission);
+    
     $(document).on('click', '.edit_record', this.viewRawSubmission);
 }
 
@@ -381,7 +384,6 @@ BadiliDash.prototype.processDownloadChoice = function(){
     $('#confirmModal').modal('hide');
     dash.downloadData(this.id, view_name);
 };
-
 
 /**
  * Initiate the download process for the data
@@ -1071,6 +1073,7 @@ BadiliDash.prototype.initiateProcessingErrorsPage = function(){
 
 BadiliDash.prototype.viewRawSubmission = function(){
     var rec_id = $(this).data("identifier");
+    dash.cur_error_id = rec_id;
     $('#spinnermModal').modal('show');
     $.ajax({
         type: "POST", url: "/fetch_single_error/", dataType: 'json', data: {'err_id': rec_id},
@@ -1121,6 +1124,21 @@ BadiliDash.prototype.initJSONEditor = function(){
               name: { "type": "string" }
           }
       }
+    });
+
+    dash.json_editor.on('change',function() {
+        // Get an array of errors from the validator
+        var errors = dash.json_editor.validate();
+        var indicator = document.getElementById('valid_indicator');
+        
+        // Not valid
+        if(errors.length) {
+            $('#valid_indicator').removeClass('alert-success').removeClass('alert-danger').addClass('alert-danger').text('Invalid Edits');
+        }
+        // Valid
+        else {
+            $('#valid_indicator').removeClass('alert-success').removeClass('alert-danger').addClass('alert-success').text('JSON Data is Valid');
+        }
     });
 };
 
@@ -1187,6 +1205,43 @@ BadiliDash.prototype.initiateMapVisualization = function(center_lat, center_lon,
 
     // load the first level admin region
     dash.loadFirstLevel(54);
+};
+
+BadiliDash.prototype.saveEditedJson = function(){
+    var edited_json = dash.json_editor.getValue();
+
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/save_json_edits/", dataType: 'json', data: {'err_id': dash.cur_error_id, 'json_data': JSON.stringify(edited_json)},
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            $('#saveRawDataEditsModal').modal('hide');
+            if (data.error) {
+                dash.showNotification('There was an error while saving the edits. Please contact the system administrator!', 'error', true);
+            } else {
+                dash.showNotification('The edits were saved successfully!', 'success', true);
+            }
+        }
+    });
+};
+
+BadiliDash.prototype.processCurSubmission = function(){
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/process_single_submission/", dataType: 'json', data: {'err_id': dash.cur_error_id},
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            $('#processSingleSubmission').modal('hide');
+            if (data.error) {
+                var mssg = sprintf('There was an error while processing the submission.<br />%s<br />Please contact the system administrator!', data.message);
+                dash.showNotification(mssg, 'error', true);
+            } else {
+                dash.showNotification('The edits were saved successfully!', 'success', true);
+            }
+        }
+    });
 };
 
 var dash = new BadiliDash();

@@ -51,4 +51,6 @@ urlpatterns = [
     url(r'^fetch_single_error/$', views.fetch_single_error, name='fetch_single_error'),
     url(r'^map_visualization/$', views.map_visualization, name='map_visualization'),
     url(r'^first_level_geojson/$', views.first_level_geojson, name='first_level_geojson'),
+    url(r'^save_json_edits/$', views.save_json_edits, name='save_json_edits'),
+    url(r'^process_single_submission/$', views.process_single_submission, name='process_single_submission'),
 ]
