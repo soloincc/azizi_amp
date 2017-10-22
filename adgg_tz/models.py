@@ -43,10 +43,26 @@ class Attribute(BaseTable):
         self.save()
 
 
+class ODKFormGroup(BaseTable):
+    # define the dictionary structure
+    order_index = models.IntegerField(unique=True)
+    group_name = models.CharField(max_length=100, unique=True)
+    comments = models.CharField(max_length=1000, null=True)
+
+    class Meta:
+        db_table = 'form_groups'
+
+    def publish(self):
+        self.save()
+
+    def get_id(self):
+        return self.id
+
+
 class ODKForm(BaseTable):
     # Define the structure of the form table
     form_id = models.IntegerField(unique=True, db_index=True)
-    form_group = models.CharField(max_length=200, null=True, db_index=True)
+    form_group = models.ForeignKey(ODKFormGroup, null=True)
     form_name = models.CharField(max_length=200, unique=True)
     full_form_id = models.CharField(max_length=200, unique=True)
     structure = JSONField(null=True)
@@ -212,4 +228,3 @@ class ProcessingErrors(BaseTable):
 
     def get_id(self):
         return self.t_key
-

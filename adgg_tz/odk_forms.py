@@ -18,7 +18,7 @@ from raven import Client
 
 from terminal_output import Terminal
 from excel_writer import ExcelWriter
-from models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLookup, DictionaryItems, FormMappings, ProcessingErrors
+from models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLookup, DictionaryItems, FormMappings, ProcessingErrors, ODKFormGroup
 from sql import Query
 
 terminal = Terminal()
@@ -136,12 +136,13 @@ class OdkForms():
                 terminal.tprint("The form '%s' is not in the database, saving it" % form['id_string'], 'warn')
                 try:
                     cur_form_group = settings.get('id_' + str(form['formid']), 'form_group')
+                    form_group = ODKFormGroup.objects.get(group_name=cur_form_group)
                 except Exception as e:
-                    cur_form_group = None
+                    form_group = None
 
                 cur_form = ODKForm(
                     form_id=form['formid'],
-                    form_group=cur_form_group,
+                    form_group=form_group,
                     form_name=form['title'],
                     full_form_id=form['id_string'],
                     auto_update=False,
@@ -1058,6 +1059,7 @@ class OdkForms():
 
         try:
             cur_form_group = config_settings.get('id_' + str(data['form']['id']), 'form_group')
+            form_group = ODKFormGroup.objects.get(group_name=cur_form_group)
             # Check if it a foreign key
             is_foreign_key = self.foreign_key_check(settings.DATABASES['mapped']['NAME'], data['table']['title'], data['drop_item']['title'])
             if is_foreign_key is not False and is_foreign_key[0] is not None:
@@ -1068,7 +1070,7 @@ class OdkForms():
                 ref_column_name = None
 
             mapping = FormMappings(
-                form_group=cur_form_group,
+                form_group=form_group.id,
                 form_question=data['table_item']['name'],
                 dest_table_name=data['table']['title'],
                 dest_column_name=data['drop_item']['title'],
@@ -1113,7 +1115,7 @@ class OdkForms():
             return {'error': True, 'message': str(e)}
 
     def mapping_info(self):
-        all_mappings = FormMappings.objects.all().order_by('dest_table_name').order_by('dest_column_name')
+        all_mappings = FormMappings.objects.select_related().all().order_by('dest_table_name').order_by('dest_column_name')
 
         to_return = []
         for mapping in all_mappings:
@@ -1161,14 +1163,14 @@ class OdkForms():
         Validate the mappings and ensure all mandatory fields have been mapped
         '''
         # get all the mapped tables
-        form_groups = list(FormMappings.objects.values('form_group').distinct())
+        form_groups = list(ODKFormGroup.objects.all().order_by('order_index'))
 
         is_fully_mapped = True
         is_mapping_valid = True
         comments = []
         for form_group in form_groups:
-            terminal.tprint("Beginning form group '%s' validation" % form_group['form_group'], 'okblue')
-            mapped_tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
+            terminal.tprint("Beginning form group '%s' validation" % form_group.group_name, 'okblue')
+            mapped_tables = list(FormMappings.objects.filter(form_group=form_group.group_name).values('dest_table_name').distinct())
             self.validated_tables = []
             self.tables_being_validated = []
 
@@ -1301,18 +1303,18 @@ class OdkForms():
         # 1. Get the form groups involved in the mapping
         # 2. For each form group, get all the tables which have been mapped
         # 3. Get the raw submissions and try and save the data to the destination tables
-        form_groups = list(FormMappings.objects.values('form_group').distinct())
+        form_groups = list(ODKFormGroup.objects.all().order_by('order_index'))
         top_error = False
         all_comments = []
 
         for form_group in form_groups:
-            terminal.tprint("Generating queries for the group '%s'" % form_group['form_group'], 'debug')
+            terminal.tprint("Generating queries for the group '%s'" % form_group.group_name, 'debug')
             self.cur_group_queries = collections.OrderedDict()
             self.all_foreign_keys = defaultdict(dict)
-            tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
+            tables = list(FormMappings.objects.filter(form_group=form_group.group_name).values('dest_table_name').distinct())
             for table in tables:
                 try:
-                    self.generate_table_query(form_group['form_group'], table['dest_table_name'], None, None)
+                    self.generate_table_query(form_group, table['dest_table_name'], None, None)
                 except Exception as e:
                     terminal.tprint('\t%s' % str(e), 'fail')
                     top_error = top_error or True
@@ -1321,7 +1323,7 @@ class OdkForms():
 
             terminal.tprint('\t%s' % json.dumps(self.cur_group_queries), 'warn')
             try:
-                (is_error, comments) = self.process_form_group_data(form_group['form_group'], is_dry_run)
+                (is_error, comments) = self.process_form_group_data(form_group, is_dry_run)
                 all_comments = copy.deepcopy(all_comments) + copy.deepcopy(comments)
                 top_error = top_error or is_error
             except Exception as e:
@@ -1337,7 +1339,7 @@ class OdkForms():
             terminal.tprint("\t\tThe query for the table %s has already been generated, skipping it..." % table, 'okblue')
             return False
 
-        terminal.tprint("\t\tGenerating %s's (%s group) query" % (table, form_group), 'warn')
+        terminal.tprint("\t\tGenerating %s's (%s group) query" % (table, form_group.group_name), 'warn')
         # get the table primary key
         # terminal.tprint("\t\tCheck whether table '%s' has a primary key" % table, 'debug')
         primary_key = self.get_table_primary_key(table)
@@ -1349,7 +1351,7 @@ class OdkForms():
         column_names = ''
         column_values = ''
         duplicate_constraints = ''
-        mappings = list(FormMappings.objects.filter(form_group=form_group).filter(dest_table_name=table).values())
+        mappings = list(FormMappings.objects.filter(form_group=form_group.group_name).filter(dest_table_name=table).values())
         mapped_columns = []
         dup_columns_sources = []
         source_datapoints = []
@@ -1418,7 +1420,7 @@ class OdkForms():
                     add_to_query = True
                 else:
                     # check if the current linked table is involved in the mapping, if it is, populate it before the current table and add the columns to the current query
-                    tables = list(FormMappings.objects.filter(form_group=form_group).filter(dest_table_name=cur_fk['fk_table']).values('dest_table_name').distinct())
+                    tables = list(FormMappings.objects.filter(form_group=form_group.group_name).filter(dest_table_name=cur_fk['fk_table']).values('dest_table_name').distinct())
 
                     if len(tables) != 0:
                         terminal.tprint('\t\tGotcha! The table "%s" should be populated before "%s"' % (cur_fk['fk_table'], table), 'ok')
@@ -1468,10 +1470,17 @@ class OdkForms():
         return False
 
     def process_form_group_data(self, form_group, is_dry_run):
-        terminal.tprint("\n\nProcessing the data for form group '%s'" % form_group, 'okblue')
+        terminal.tprint("\n\nProcessing the data for form group '%s'" % form_group.group_name, 'okblue')
         comments = []
-        all_data = {}
-        odk_form = list(ODKForm.objects.filter(form_group=form_group).values('id', 'form_id'))[0]
+        print form_group.group_name
+        print form_group.order_index
+        print form_group.id
+        odk_form = list(ODKForm.objects.filter(form_group=form_group.id).values('id', 'form_id'))[0]
+        # terminal.tprint(json.dumps(odk_form), 'ok')
+        print 'wtf'
+        # odk_form = list(ODKForm.objects.all())[0]
+        # odk_form = list(ODKForm.objects.all())
+        # terminal.tprint(json.dumps(odk_form), 'ok')
 
         all_nodes = []
         for (group_name, cur_group) in self.cur_group_queries.iteritems():
@@ -1751,7 +1760,7 @@ class OdkForms():
         return m[0]
 
     def delete_processed_data(self):
-        form_groups = list(FormMappings.objects.values('form_group').distinct())
+        form_groups = list(ODKFormGroup.objects.all().order_by('order_index'))
         top_error = False
         all_comments = []
 
@@ -1760,10 +1769,10 @@ class OdkForms():
         cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
         for form_group in form_groups:
             self.truncated_tables = []
-            tables = list(FormMappings.objects.filter(form_group=form_group['form_group']).values('dest_table_name').distinct())
+            tables = list(FormMappings.objects.filter(form_group=form_group.group_name).values('dest_table_name').distinct())
             for table in tables:
                 try:
-                    self.truncate_table_data(form_group['form_group'], table['dest_table_name'], None, None)
+                    self.truncate_table_data(form_group, table['dest_table_name'], None, None)
                 except Exception as e:
                     top_error = True
                     all_comments.append(str(e))
@@ -1790,9 +1799,9 @@ class OdkForms():
             terminal.tprint("\tThe table %s has already been truncated, skipping it..." % table, 'okblue')
             return False
 
-        terminal.tprint("\tGenerating %s's (%s group) truncate query" % (table, form_group), 'okblue')
+        terminal.tprint("\tGenerating %s's (%s group) truncate query" % (table, form_group.group_name), 'okblue')
         truncate_query = "TRUNCATE %s" % table
-        mappings = list(FormMappings.objects.filter(form_group=form_group).filter(dest_table_name=table).values())
+        mappings = list(FormMappings.objects.filter(form_group=form_group.group_name).filter(dest_table_name=table).values())
 
         for mapping in mappings:
             if mapping['ref_table_name'] is not None and table != mapping['dest_table_name']:
