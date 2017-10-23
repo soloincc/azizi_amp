@@ -166,7 +166,8 @@ class OdkForms():
             odk_form = ODKForm.objects.get(form_id=form_id)
 
             if uuids is not None:
-                terminal.tprint('\tWe are only interested in data already saved and we have their uuids', 'ok')
+                terminal.tprint('\tWe are only interested in data already saved and we have their uuids: %s' % json.dumps(uuids), 'ok')
+                # print odk_form.id
                 # we are only interested in data already saved and we have their uuids
                 submissions = RawSubmissions.objects.filter(uuid__in=uuids).filter(form_id=odk_form.id).values('raw_data')
                 return submissions
@@ -673,7 +674,10 @@ class OdkForms():
         if len(all_submissions) == 0:
             terminal.tprint("The form (%s) has no submissions for download" % str(form_name), 'fail')
             logging.debug("The form (%s) has no submissions for download" % str(form_name))
-            return {'is_downloadable': False, 'error': False, 'message': "The form (%s) has no submissions for download" % str(form_name)}
+            if download_type == 'download_save':
+                return {'is_downloadable': False, 'error': False, 'message': "The form (%s) has no submissions for download" % str(form_name)}
+            elif download_type == 'submissions':
+                return all_submissions
 
         # check if there is need to create a database view of this data
         if download_type == 'download_save':
@@ -1598,6 +1602,7 @@ class OdkForms():
             self.output_structure[table] = ['unique_id']
             self.cur_fk[table] = []
 
+            print data
             formatted = self.format_extracted_data(data, cur_group['source_datapoints'])
             cur_dataset[table] = formatted
 
@@ -2062,7 +2067,7 @@ class OdkForms():
 
     def process_single_submission(self, err_id):
         try:
-            cur_error = list(ProcessingErrors.objects.filter(id=err_id).values('data_uuid'))[0] 
+            cur_error = list(ProcessingErrors.objects.filter(id=err_id).values('data_uuid'))[0]
         except Exception as e:
             terminal.tprint("\tError! Couldn't find the defined processing error with id %s. \n\t%s" % (err_id, str(e)), 'fail')
             return True, "Could not find the defined processing error."
@@ -2074,9 +2079,13 @@ class OdkForms():
         else:
             uuid = cur_error['data_uuid']
 
-        (is_success, comments) = self.manual_process_data(False, [uuid])
+        (is_error, comments) = self.manual_process_data(False, [uuid])
+        if is_error is False:
+            cur_error = ProcessingErrors.objects.get(id=err_id)
+            cur_error.is_resolved = 1
+            cur_error.publish()
 
-        return is_success, comments
+        return is_error, comments
 
 
 def auto_process_submissions():

@@ -1238,7 +1238,8 @@ BadiliDash.prototype.processCurSubmission = function(){
                 var mssg = sprintf('There was an error while processing the submission.<br />%s<br />Please contact the system administrator!', data.message);
                 dash.showNotification(mssg, 'error', true);
             } else {
-                dash.showNotification('The edits were saved successfully!', 'success', true);
+                dash.json_editor.setValue({});
+                dash.showNotification('The submission was processed successfully!', 'success', true);
             }
         }
     });
