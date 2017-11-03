@@ -790,7 +790,8 @@ BadiliDash.prototype.refreshMappingsTable = function(data){
         {'name': 'db_question_type', 'title': 'Dest Type'},
         {'name': 'validation_regex', 'title': 'Validation REGEX', 'width': '120px'},
         {'name': 'is_record_identifier', 'title': 'Is Identifier'},
-        // {'name': 'structure', 'title': 'View Structure'}
+        {'name': 'is_lookup_field', 'title': 'Is Lookup'},
+        {'name': 'use_current_time', 'title': 'Auto Time'}
     ];
 
     if(dash.ft == undefined){
