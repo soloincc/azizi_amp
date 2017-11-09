@@ -8,7 +8,7 @@ import math
 
 from ConfigParser import ConfigParser
 from datetime import datetime
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from django.conf import settings
 from django.forms.models import model_to_dict
@@ -1434,10 +1434,30 @@ class OdkForms():
         for mapping in mappings:
             terminal.tprint("\t\t\tProcessing the mapping: '%s' - '%s' - '%s' - '%s' - '%s'" % (mapping['form_group'], mapping['form_question'], mapping['odk_question_type'], mapping['dest_table_name'], mapping['dest_column_name']), 'warn')
             if mapping['dest_column_name'] in mapped_columns:
-                # we have a scenario where 2 data
-                cur_table_group['columns'][mapping['dest_column_name']]['has_multiple_sources'] = True
-                cur_table_group['columns'][mapping['dest_column_name']]['sources'].append(mapping['form_question'])
                 source_datapoints.append(mapping['form_question'])
+
+                if 'is_lookup_field' in cur_table_group['columns'][mapping['dest_column_name']]:
+                    # We have another mapping which corresponds to a lookup table, so add it to the list of dict infos
+                    # Copy-Pasted code from below! Bad
+                    cur_dict = defaultdict(dict)
+                    cur_dict['odk_node'] = mapping['form_question']
+                    cur_dict['question_type'] = mapping['odk_question_type']
+                    cur_dict['form_group'] = form_group.group_name
+                    cur_dict['unique_cols'] = []
+
+                    cur_table_group['columns'][mapping['dest_column_name']]['is_lookup_field'] = True
+
+                    # if we have a lookup thing which is not a select, we are expecting some data, so include this in the query
+                    cur_dict['is_a_select'] = False if mapping['odk_question_type'] not in ('select one', 'select multiple') else True
+
+                    cur_table_group['columns'][mapping['dest_column_name']]['dict_info'].append(cur_dict)
+                else:
+                    terminal.tprint(json.dumps(cur_table_group), 'ok')
+                    terminal.tprint("\t\t\tFound an instance(%s-%s) where multiple data sources are saved in one table field(%s)'" % (json.dumps(cur_table_group['columns'][mapping['dest_column_name']]['sources']), mapping['form_question'], mapping['dest_column_name']), 'okblue')
+                    # we have a scenario where 2 data sources are being saved in one table field
+                    cur_table_group['columns'][mapping['dest_column_name']]['has_multiple_sources'] = True
+                    cur_table_group['columns'][mapping['dest_column_name']]['sources'].append(mapping['form_question'])
+
                 continue
 
             if mapping['is_lookup_field'] == 1:
@@ -1452,15 +1472,20 @@ class OdkForms():
                 column_names.append(mapping['dest_column_name'])
                 column_values.append('%s')
 
-                cur_table_group['columns'][mapping['dest_column_name']]['dict_info'] = defaultdict(dict)
-                cur_table_group['columns'][mapping['dest_column_name']]['dict_info']['odk_node'] = mapping['form_question']
-                cur_table_group['columns'][mapping['dest_column_name']]['dict_info']['question_type'] = mapping['odk_question_type']
-                cur_table_group['columns'][mapping['dest_column_name']]['dict_info']['form_group'] = form_group.group_name
+                cur_dict = defaultdict(dict)
+                if 'dict_info' not in cur_table_group['columns'][mapping['dest_column_name']]:
+                    cur_table_group['columns'][mapping['dest_column_name']]['dict_info'] = []
+                cur_dict['odk_node'] = mapping['form_question']
+                cur_dict['question_type'] = mapping['odk_question_type']
+                cur_dict['form_group'] = form_group.group_name
+                cur_dict['unique_cols'] = []
+
                 cur_table_group['columns'][mapping['dest_column_name']]['is_lookup_field'] = True
 
                 # if we have a lookup thing which is not a select, we are expecting some data, so include this in the query
-                is_a_select = False if mapping['odk_question_type'] not in ('select one', 'select multiple') else True
-                cur_table_group['columns'][mapping['dest_column_name']]['dict_info']['is_a_select'] = is_a_select
+                cur_dict['is_a_select'] = False if mapping['odk_question_type'] not in ('select one', 'select multiple') else True
+
+                cur_table_group['columns'][mapping['dest_column_name']]['dict_info'].append(cur_dict)
                 continue
 
             if mapping['odk_question_type'] == 'geopoint':
@@ -1530,12 +1555,16 @@ class OdkForms():
                         cur_table_group['columns'][cur_fk['col']]['is_linked'] = True
                         if cur_fk['fk_table'] == settings.LOOKUP_TABLE:
                             terminal.tprint("\t\tA linkage (%s:%s) to the lookup table, no need to process it in the usual way, just formulate the linkage query" % (table, cur_fk['col']), 'okblue')
+                            unique_cols = []
                             # linkage to the lookup table, no need to process it in the usual way, just formulate the linkage query
                             # i don't know where to get the unique columns
-                            if cur_table_group['columns'][cur_fk['col']]['dict_info']['is_a_select'] is True:
-                                unique_cols = ['form_group', 'parent_node', 't_key']
-                            else:
-                                unique_cols = ['form_group', 't_key']
+                            i = 0
+                            for dict_info in cur_table_group['columns'][cur_fk['col']]['dict_info']:
+                                if dict_info['is_a_select'] is True:
+                                    cur_table_group['columns'][cur_fk['col']]['dict_info'][i]['unique_cols'] = ['form_group', 'parent_node', 't_key']
+                                else:
+                                    cur_table_group['columns'][cur_fk['col']]['dict_info'][i]['unique_cols'] = ['form_group', 't_key']
+                                i += 1
                         else:
                             unique_cols = self.get_all_unique_cols(cur_fk['fk_table'])
                             if len(unique_cols) == 0:
@@ -1545,11 +1574,12 @@ class OdkForms():
 
                         cur_table_group['columns'][cur_fk['col']]['linkage'] = {'table': cur_fk['fk_table'], 'col': cur_fk['ref_col'], 'unique_cols': unique_cols}
 
-                if add_to_query:
-                    column_names.append(cur_fk['col'])
-                    column_values.append("%s")
+                if add_to_query is True:
                     cur_fk['is_linked_table'] = True
-                    mapped_columns.append(cur_fk['col'])
+                    if cur_fk['col'] not in mapped_columns:
+                        mapped_columns.append(cur_fk['col'])
+                        column_names.append(cur_fk['col'])
+                        column_values.append("%s")
                     fks_to_add[cur_fk['col']] = cur_fk
                     # self.cur_group_queries[table]['columns'][cur_fk['col']] = cur_fk
 
@@ -1728,19 +1758,20 @@ class OdkForms():
                 # terminal.tprint('\t%s: %s' % (table, json.dumps(nodes_data)), 'warn')
                 try:
                     (data_points, dup_data_points) = self.populate_query(cur_group, nodes_data, data['instanceID'])
-                    final_query = cur_group['query'] % tuple(data_points)
-                    # terminal.tprint('\tFinal query: %s\n' % final_query, 'ok')
-                except ValueError as e:
-                    terminal.tprint('\t%s' % str(e), 'fail')
-                    self.create_error_log_entry('data_error', str(e), data['instanceID'], None)
-                    raise ValueError(str(e))
+                    
+                    terminal.tprint(cur_group['query'], 'ok')
+                    terminal.tprint(json.dumps(data_points[0]), 'ok')
+
+                    final_query = cur_group['query'] % tuple(data_points[0].values())
+                    
+                    terminal.tprint(final_query, 'okblue')
+                    # terminal.tprint('\t%s' % json.dumps(data_points), 'warn')
+                    duplicate_query = cur_group['dup_check']['is_duplicate_query'] % tuple(dup_data_points[0].values())
                 except Exception as e:
                     terminal.tprint('\tI dont know this error "%s". Re-raising it.' % str(e), 'fail')
+                    self.create_error_log_entry('data_error', str(e), data['instanceID'], None)
                     sentry.captureException()
                     raise
-
-                # terminal.tprint('\t%s' % json.dumps(data_points), 'warn')
-                duplicate_query = cur_group['dup_check']['is_duplicate_query'] % tuple(dup_data_points)
 
                 # now lets execute our query
                 cursor = connections['mapped'].cursor()
@@ -1809,23 +1840,22 @@ class OdkForms():
     def populate_query(self, q_meta, q_data, instanceID):
         """
         Given the destination table structure, corresponding data sets and the rules of the destination table, create a final SQL query that can be used to add data
-        
         Args:
             q_meta (json): An object containing the table structure and definition parameters
             q_data (json): An object containing the extracted dataset to be saved
             instanceID (string): A string containing a unique uuid for the current record
-        
         Returns:
             array: Returns an array of the found data points and duplicate data points
-        
         Raises:
             Exception: Description
             ValueError: If there is an error in processing the `q_data`
         """
-        data_points = []
-        dup_data_points = []
+        all_data = []
+        data_points = OrderedDict()
+        dup_data_points = OrderedDict()
         for col in q_meta['dest_columns']:
             # get the source node details
+            linked_nodes = []
             source_node = q_meta['columns'][col]
             # if we have a linked table, the processing logic is very different
             if 'is_linked_table' in source_node:
@@ -1833,7 +1863,9 @@ class OdkForms():
                     try:
                         # the linked table must have already been processed and the saved id already saved
                         fk_id = self.cur_fk[source_node['fk_table']][0]
-                        data_points.append(fk_id)
+                        data_points[col] = fk_id
+                        if col in q_meta['dup_check']['dup_columns_sources']:
+                            dup_data_points[col] = fk_id
                     except Exception:
                         mssg = "Expecting that the table '%s' is already processed and the generated foreign key saved. I didn't find it. Can't proceed" % source_node['fk_table']
                         terminal.tprint('\t%s' % mssg, 'fail')
@@ -1844,7 +1876,7 @@ class OdkForms():
             node_data = None
 
             if 'has_multiple_sources' in source_node and 'is_foreign_key' not in source_node:
-                node_data = self.process_muliple_source_node(col, source_node, q_data)
+                node_data = self.process_multiple_source_node(col, source_node, q_data)
             elif 'regex' in source_node:
                 # the data is only coming from one source and we have a regex defined
                 node_data = self.validate_data_point(source_node['regex'], q_data[source_node['sources'][0]], source_node['sources'][0])
@@ -1852,48 +1884,53 @@ class OdkForms():
             # if 'is_geopoint' in source_node:
             #     node_data = self.process_geopoint_node(col, source_node['sources'], q_data)
             if 'is_linked' in source_node:
-                # we need to fetch this node data from another table
-                where_criteria = ''
-                no_repeats = 0
-                for criteria in source_node['linkage']['unique_cols']:
-                    this_criteria = '%s=%%s' % criteria
-                    where_criteria = '%s and %s' % (where_criteria, this_criteria) if where_criteria != '' else this_criteria
-                    no_repeats += 1
-
-                fetch_query = 'SELECT %s FROM %s WHERE %s' % (source_node['linkage']['col'], source_node['linkage']['table'], where_criteria)
-
-                # Check if we are dealing with a lookup field
-                if 'is_lookup_field' in source_node:
-                    # Depending on the question type, the node data as well as method of querying will be different
-                    # For selects, we shall have a full lookup table with attribute_value as NULL
-                    # For others, we have a partial lookup table where parent_node in the dictionary as NULL and attribute value from the questionnaire
-                    if source_node['dict_info']['is_a_select'] is True:
-                        query_vals = [source_node['dict_info']['form_group'], source_node['dict_info']['odk_node'], q_data[source_node['dict_info']['odk_node']]]
-                    else:
-                        query_vals = [source_node['dict_info']['form_group'], source_node['dict_info']['odk_node']]
-
-                    odk_source_qst = source_node['dict_info']['odk_node']
-                else:
-                    odk_source_qst = source_node['sources'][0]
-                    query_vals = [q_data[odk_source_qst]] * no_repeats
-
-                cursor = connections['mapped'].cursor()
+                # We anticipate multiple sources
                 try:
-                    cursor.execute(fetch_query, query_vals)
-                    linked_data = cursor.fetchall()
-                    if len(linked_data) == 0:
-                        # terminal.tprint(json.dumps(q_data), 'fail')
-                        mssg = "\tI couldn't find the corresponding dataset in column '%s:%s'. The linkage cannot happen.\n\tQuery: %s\n\tValues: %s" % (source_node['linkage']['table'], source_node['linkage']['col'], fetch_query, json.dumps(query_vals))
-                        self.create_error_log_entry('data_error', mssg, instanceID, None)
-                        raise ValueError(mssg)
-                    elif len(linked_data) > 1:
-                        mssg = "\tI found multiple corresponding datasets in column '%s:%s'. The linkage is ambigous.\n\tQuery: %s\n\tValues: %s" % (source_node['linkage']['table'], source_node['linkage']['col'], fetch_query, json.dumps(query_vals))
-                        self.create_error_log_entry('data_error', mssg, instanceID, None)
-                        raise ValueError(mssg)
-                    # terminal.tprint(json.dumps(linked_data), 'fail')
-                    node_data = linked_data[0][0]
+                    for dict_info in source_node['dict_info']:
+                        # we need to fetch this node data from another table
+                        where_criteria = ''
+                        no_repeats = 0
+                        for criteria in dict_info['linkage']['unique_cols']:
+                            this_criteria = '%s=%%s' % criteria
+                            where_criteria = '%s and %s' % (where_criteria, this_criteria) if where_criteria != '' else this_criteria
+                            no_repeats += 1
+
+                        fetch_query = 'SELECT %s FROM %s WHERE %s' % (dict_info['linkage']['col'], dict_info['linkage']['table'], where_criteria)
+
+                        # Check if we are dealing with a lookup field
+                        if 'is_lookup_field' in source_node:
+                            # Depending on the question type, the node data as well as method of querying will be different
+                            # For selects, we shall have a full lookup table with attribute_value as NULL
+                            # For others, we have a partial lookup table where parent_node in the dictionary as NULL and attribute value from the questionnaire
+                            if dict_info['is_a_select'] is True:
+                                query_vals = [dict_info['form_group'], dict_info['odk_node'], q_data[dict_info['odk_node']]]
+                            else:
+                                query_vals = [dict_info['form_group'], dict_info['odk_node']]
+
+                            odk_source_qst = dict_info['odk_node']
+                        else:
+                            odk_source_qst = source_node['sources'][0]
+                            query_vals = [q_data[odk_source_qst]] * no_repeats
+
+                        cursor = connections['mapped'].cursor()
+                        cursor.execute(fetch_query, query_vals)
+                        linked_data = cursor.fetchall()
+                        if len(linked_data) == 0:
+                            # terminal.tprint(json.dumps(q_data), 'fail')
+                            mssg = "\tI couldn't find the corresponding dataset in column '%s:%s'. The linkage cannot happen.\n\tQuery: %s\n\tValues: %s" % (source_node['linkage']['table'], source_node['linkage']['col'], fetch_query, json.dumps(query_vals))
+                            self.create_error_log_entry('data_error', mssg, instanceID, None)
+                            raise ValueError(mssg)
+                        elif len(linked_data) > 1:
+                            mssg = "\tI found multiple corresponding datasets in column '%s:%s'. The linkage is ambigous.\n\tQuery: %s\n\tValues: %s" % (source_node['linkage']['table'], source_node['linkage']['col'], fetch_query, json.dumps(query_vals))
+                            self.create_error_log_entry('data_error', mssg, instanceID, None)
+                            raise ValueError(mssg)
+                        # terminal.tprint(json.dumps(linked_data), 'fail')
+                        linked_nodes.append(linked_data[0][0])
+
+                    # if all is ok, add a placeholder in the nodes data
+                    node_data = 'place_holder'
                 except Exception as e:
-                    terminal.tprint('\tError while fetching the linked data. "%s"' % str(e), 'fail')
+                    terminal.tprint('\tError while processing linked data. "%s"' % str(e), 'fail')
                     sentry.captureException()
                     raise
             else:
@@ -1923,7 +1960,7 @@ class OdkForms():
                         if source_node['is_nullable'] is True:
                             is_nullable = True
 
-                    if is_nullable:
+                    if is_nullable is True:
                         node_data = None
                     else:
                         mssg = "I can't find the data for the variable '%s' in '%s'" % (odk_source_qst, json.dumps(q_data))
@@ -1934,15 +1971,43 @@ class OdkForms():
                         raise Exception(mssg)
 
             # Append the found node data
-            data_points.append(node_data)
+            data_points[col] = node_data
             if col in q_meta['dup_check']['dup_columns_sources']:
-                dup_data_points.append(node_data)
+                dup_data_points[col] = node_data
+
+        # if we have linked nodes, replace the placeholder text with the actual data
+        # The data in the linked_nodes is added by a simple append, so there is need to calculate the actual position of where to ge tthe data
+        all_data_points = []
+        all_dup_data_points = []
+        if len(linked_nodes) != 0:
+            no_occurences = data_points.values().count('place_holder')
+            iterations = len(linked_nodes) / no_occurences
+            for i in iterations:
+                dp = {}
+                ddp = {}
+                j = 0
+                for col, node in data_points.iteritems():
+                    if node == 'place_holder':
+                        cur_linked_index = (i * iterations) + j
+                        dp[col] = linked_nodes[cur_linked_index]
+                        ddp[col] = linked_nodes[cur_linked_index]
+                        j += 1
+                    else:
+                        dp[col] = node
+                        ddp[col] = node
+
+            # Now add the new dict
+            all_data_points.append(dp)
+            all_dup_data_points.append(ddp)
+        else:
+            all_data_points = [data_points]
+            all_dup_data_points = [dup_data_points]
 
         # terminal.tprint('\tColumns: %s' % json.dumps(q_meta['dest_columns']), 'fail')
-        # terminal.tprint('\tData points are: %s' % json.dumps(data_points), 'okblue')
-        return data_points, dup_data_points
+        terminal.tprint('\tData points: %s, Duplicate points: %s' % (json.dumps(all_data_points), json.dumps(all_dup_data_points)), 'okblue')
+        return all_data_points, all_dup_data_points
 
-    def process_muliple_source_node(self, column, source_node, q_data):
+    def process_multiple_source_node(self, column, source_node, q_data):
         # the given multiple input data sources is to be saved to a single column
         # terminal.tprint("\tProcessing column '%s' which has multiple data sources" % column, 'debug')
         nodes_present = 0
