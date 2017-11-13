@@ -1,0 +1,162 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>ODK Server Settings</h5>
+                </div>
+                <div class="ibox-content">
+                    <div class='row'>
+                        <div class="col-sm-12 b-r">
+                            <form class="form-horizontal">
+                                <p>The ODK server settings for connecting to the server</p>
+                                <div class="form-group"><label class="col-lg-3 control-label">Host</label>
+                                    <div class="col-lg-9"><input type="url" placeholder="Server Host" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Username</label>
+                                    <div class="col-lg-9"><input type="text" placeholder="User" class="form-control"></div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Password</label>
+                                    <div class="col-lg-9"><input type="password" placeholder="Password" class="form-control"></div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Confirm</label>
+                                    <div class="col-lg-9"><input type="password" placeholder="Confirm Password" class="form-control"></div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">API Token</label>
+                                    <div class="col-lg-9"><input type="text" placeholder="API Token" class="form-control"></div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-lg-offset-2 col-lg-9">
+                                        <button class="btn btn-sm btn-primary pull-right m-t-n-xs" type="submit"><strong>Save</strong></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Destination Database Settings (MySQL)</h5>
+                </div>
+                <div class="ibox-content">
+                    <div class='row'>
+                        <div class="col-sm-12 b-r">
+                            <form class="form-horizontal">
+                                <div class="form-group"><label class="col-lg-3 control-label">Host</label>
+                                    <div class="col-lg-9"><input type="url" placeholder="Server Host" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Database</label>
+                                    <div class="col-lg-9"><input type="text" placeholder="DB Name" class="form-control"></div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Username</label>
+                                    <div class="col-lg-9"><input type="text" placeholder="User" class="form-control"></div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Password</label>
+                                    <div class="col-lg-9"><input type="password" placeholder="Password" class="form-control"></div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Confirm</label>
+                                    <div class="col-lg-9"><input type="password" placeholder="Confirm Password" class="form-control"></div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Port</label>
+                                    <div class="col-lg-9"><input type="text" placeholder="Port" class="form-control"></div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-lg-offset-2 col-lg-9">
+                                        <button class="btn btn-sm btn-primary pull-right m-t-n-xs" type="submit"><strong>Save</strong></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Other System Settings</h5>
+                </div>
+                <div class="ibox-content">
+                    <div class='row'>
+                        <div class="col-sm-12 b-r">
+                            <form class="form-horizontal">
+                                <div class="form-group">
+                                    <label class="col-lg-3 control-label">Default Language</label>
+                                    <div class="col-lg-9"><input type="email" placeholder="Default Locale" class="form-control"> 
+                                        <span class="help-block m-b-none">The default language to use in case of multiple languages in the form</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Lookup Table Name</label>
+                                    <div class="col-lg-9">
+                                        <input type="text" placeholder="Lookup Table" class="form-control">
+                                        <span class="help-block m-b-none">The lookup table where the ODK data/options are saved</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Dry Ran Records</label>
+                                    <div class="col-lg-9">
+                                        <input type="text" placeholder="Dry Run Records" class="form-control">
+                                        <span class="help-block m-b-none">The number of records to use when performing a dry run</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Joining String</label>
+                                    <div class="col-lg-9">
+                                        <input type="text" placeholder="Joiner" class="form-control">
+                                        <span class="help-block m-b-none">The string to use as a joiner when multiple data sources are defined for a single destination</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label">Sentry Error Logging</label>
+                                    <div class="col-lg-9">
+                                        <input type="text" placeholder="Sentry URL" class="form-control">
+                                        <span class="help-block m-b-none">The Sentry URL to use to log exceptions arising from the system</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-lg-offset-2 col-lg-9">
+                                        <button class="btn btn-sm btn-primary pull-right m-t-n-xs" type="submit"><strong>Save</strong></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type='text/javascript' src="{{ static('plugins/metisMenu/jquery.metisMenu.js') }}"></script>
+<script type='text/javascript' src="{{ static('plugins/slimscroll/jquery.slimscroll.min.js') }}"></script>
+
+<!-- Custom and plugin javascript -->
+<script type='text/javascript' src="{{ static('plugins/pace/pace.min.js') }}"></script>
+
+<!-- FooTable -->
+<script type='text/javascript' src="{{ static('bower/footables/compiled/footable.js') }}"></script>
+<script type="text/javascript" src="{{ static('bower/sweetalert/dist/sweetalert.min.js') }}"></script>
+<script type='text/javascript' src="{{ static('js/adgg.js') }}"></script>
+
+<script>
+    $(document).ready(function(){
+        BadiliDash.data = {};
+
+        dash.data = {{ all_data | safe }};
+    });
+</script>
+
+</div>
+
+{% endblock %}

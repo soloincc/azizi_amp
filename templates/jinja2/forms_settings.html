@@ -1,0 +1,131 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/dynatable/jquery.dynatable.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+    
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+
+    <div class="wrapper wrapper-content animated fadeInRight">
+        <div class='row'>
+            <div class='col-lg-12' id='error_table'>
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>Forms Settings</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <table id='form_settings' class='table'>
+                            <thead>
+                                <th data-dynatable-column="id">ID</th>
+                                <th data-dynatable-column="form_name">Form Name</th>
+                                <th data-dynatable-column="form_group">Form Group</th>
+                                <th data-dynatable-column="form_id">Full Form ID</th>
+                                <th data-dynatable-column="auto_update">Auto Process</th>
+                                <th data-dynatable-column="is_source_deleted">Is Deleted</th>
+                                <th data-dynatable-column="actions">Actions</th>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row form_structure hidden">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-warning pull-right">Full error details</span>
+                        <h5>Error Additional Info</h5>
+                    </div>
+                    <div class="ibox-content" id='error_information'>
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <small class="stats-label">Is Resolved</small>
+                                <h4 id='is_resolved'><button type="button" class="btn btn-danger btn-sm">No</button></h4>
+                            </div>
+
+                            <div class="col-xs-2">
+                                <small class="stats-label">Error ID</small>
+                                <h4 id='error_id'>46.11%</h4>
+                            </div>
+                            <div class="col-xs-2">
+                                <small class="stats-label">Error Code</small>
+                                <h4 id='error_code'>432.021</h4>
+                            </div>
+                            <div class="col-xs-2">
+                                <small class="stats-label">UUID</small>
+                                <h4 class='uuid'>643 321.10</h4>
+                            </div>
+
+                            <div class="col-xs-2">
+                                <small class="stats-label">Submission Time</small>
+                                <h4 id='subm_time'>92.43%</h4>
+                            </div>
+                            <div class="col-xs-2">
+                                <small class="stats-label">Last week</small>
+                                <h4 id=''>564.554</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <span class="badge badge-success">Data UUID</span>
+                                    <span class='uuid'>But who has any right</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="badge badge-warning">Comments</span>
+                                    <span id='err_comments' class='text-warning'>But I must explain to</span>
+                                </li>
+                                <li class="list-group-item ">
+                                    <span class="badge badge-danger">Message</span>
+                                    <span id='err_message' class='text-danger'>How all this mistaken</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="badge badge-plain">Other</span>
+                                    <span id='add_comments'>But because occasionally</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row json_editor hidden">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>Data JSON Editor</h5>
+                        <div class='row table_actions ibox-tools'>
+                            <button class="alert alert-success" id='valid_indicator'>JSON Data is Valid</button>
+                            <button type="button" class="btn btn-outline btn-primary" data-toggle="modal" data-target="#processSingleSubmission" id='save_edits'>Process Submission</button>
+                            <button type="button" class="btn btn-outline btn-success" data-toggle="modal" data-target="#saveRawDataEditsModal" id='save_edits'>Save Edits</button>
+                        </div>
+                    </div>
+                    <div class="ibox-content" id='edit_raw_json'>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcore.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxnotification.js') }}"></script>
+
+    <script type="text/javascript" src="{{ static('bower/dynatable/jquery.dynatable.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/json-editor/dist/jsoneditor.min.js') }}"></script>
+    
+    <script type='text/javascript' src="{{ static('js/adgg.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+            BadiliDash.data = {};
+            dash.initiateFormSettingsPage();
+        });
+    </script>
+</div>
+
+{% endblock %}

@@ -23,7 +23,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'static/(?P<path>.*)$', views.serve_static_files),
-    url(r'^$', views.show_dashboard, name='landing_page'),
+    url(r'^$', views.show_landing, name='landing_page'),
     url(r'^sdss$', views.show_dashboard, name='landing_page'),
     url(r'^home$', views.show_dashboard, name='landing_page'),
     url(r'^dashboard$', views.show_dashboard, name='dashboard'),
@@ -55,4 +55,6 @@ urlpatterns = [
     url(r'^process_single_submission/$', views.process_single_submission, name='process_single_submission'),
     url(r'^processing_status/$', views.processing_status, name='processing_status'),
     url(r'^fetch_processing_status/$', views.fetch_processing_status, name='fetch_processing_status'),
+    url(r'^system_settings/$', views.system_settings, name='system_settings'),
+    url(r'^forms_settings/$', views.forms_settings, name='forms_settings'),
 ]

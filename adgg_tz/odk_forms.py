@@ -1775,7 +1775,7 @@ class OdkForms():
                             final_query = cur_group['query'] % tuple(data_points[i].values())
                             duplicate_query = cur_group['dup_check']['is_duplicate_query'] % tuple(dup_data_points[i].values())
 
-                            terminal.tprint('\tExecuting the main query: %s' % final_query, 'ok')
+                            # terminal.tprint('\tExecuting the main query: %s' % final_query, 'ok')
                             cursor.execute(cur_group['query'], tuple(data_points[i].values()))
                             cursor.execute('SELECT @@IDENTITY')
                             last_insert_id = int(cursor.fetchone()[0])
@@ -1783,11 +1783,12 @@ class OdkForms():
 
                         except IntegrityError as e:
                             # it seems we have a duplicate entry, check if it is already saved
-                            terminal.tprint('\tExecuting the duplicate query: %s' % duplicate_query, 'ok')
+                            # terminal.tprint('\tExecuting the duplicate query: %s' % duplicate_query, 'ok')
                             cursor.execute(cur_group['dup_check']['is_duplicate_query'], tuple(dup_data_points[i].values()))
                             inserted_data = cursor.fetchone()
                             if inserted_data is None:
                                 # We have a real duplicate data, this is not a logic error but a problem with the source data
+                                terminal.tprint("\tDuplicate data, skipping this data record", 'warn')
                                 self.create_error_log_entry('duplicate', str(e), data['instanceID'], duplicate_query)
                                 continue
                             self.cur_fk[table].append(inserted_data[0])
@@ -1796,6 +1797,8 @@ class OdkForms():
                             terminal.tprint('\tError (%s) while executing the final queries.' % str(e), 'fail')
                             sentry.captureException()
                             raise
+
+                    terminal.tprint("\tThe instance '%s' has been processed successfully" % data['instanceID'], 'ok')
                 except Exception as e:
                     terminal.tprint('\tError (%s) while testing the queries' % str(e), 'fail')
                     self.create_error_log_entry('data_error', str(e), data['instanceID'], None)
@@ -2058,7 +2061,7 @@ class OdkForms():
             all_dup_data_points = [dup_data_points]
 
         # terminal.tprint('\tColumns: %s' % json.dumps(q_meta['dest_columns']), 'fail')
-        terminal.tprint('\n\tData points: %s, Duplicate points: %s' % (json.dumps(all_data_points), json.dumps(all_dup_data_points)), 'okblue')
+        # terminal.tprint('\n\tData points: %s, Duplicate points: %s' % (json.dumps(all_data_points), json.dumps(all_dup_data_points)), 'okblue')
         return all_data_points, all_dup_data_points
 
     def process_multiple_source_node(self, column, source_node, q_data):

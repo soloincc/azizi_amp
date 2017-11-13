@@ -1,0 +1,66 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+</div>
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-content text-center">
+                    <h2><i class="fa fa-chevron-left"> </i>  ADGG Tanzania Overview</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class='row'>
+        <div class='col-lg-4'>
+            <div class='ibox float-e-margins'>
+                <div class='ibox-title'>Farmers</div>
+                <div class='ibox-content'>
+                    <h1>{{ data.farmers.count }}</h1>
+                </div>
+            </div>
+        </div>
+        <div class='col-lg-4'>
+            <div class='ibox float-e-margins'>
+                <div class='ibox-title'>Animals</div>
+                <div class='ibox-content'>
+                    <div id="adgg_animals"></div>
+                </div>
+            </div>
+        </div>
+        <div class='col-lg-4'>
+            <div class='ibox float-e-margins'>
+                <div class='ibox-title'>Error Logs</div>
+                <div class='ibox-content'>
+                    <div id="adgg_errors"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Global Compulsory -->
+    <script type="text/javascript" src="{{ static('unify-assets/plugins/jquery/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('unify-assets/plugins/jquery/jquery-migrate.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('unify-assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+
+    <!-- Highcharts plugins-->
+    <script type="text/javascript" src="{{ static('highcharts/highcharts.js') }}"></script>
+
+    <script type='text/javascript' src="{{ static('js/adgg.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+            BadiliDash.data = {};
+
+            dash.data = {{ data | safe}};
+            // dash.initiate_dashboard();
+        });
+    </script>
+</div>
+
+{% endblock %}

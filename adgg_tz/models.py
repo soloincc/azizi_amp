@@ -59,6 +59,22 @@ class ODKFormGroup(BaseTable):
         return self.id
 
 
+class SystemSettings(BaseTable):
+    # system settings table
+    setting_name = models.CharField(max_length=200)
+    setting_key = models.CharField(max_length=100, unique=True)
+    setting_value = models.CharField(max_length=1000)
+
+    class Meta:
+        db_table = 'system_settings'
+
+    def publish(self):
+        self.save()
+
+    def get_id(self):
+        return self.id
+
+
 class ODKForm(BaseTable):
     # Define the structure of the form table
     form_id = models.IntegerField(unique=True, db_index=True)

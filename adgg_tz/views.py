@@ -21,6 +21,7 @@ from django.middleware import csrf
 from wsgiref.util import FileWrapper
 
 from .odk_forms import OdkForms
+from .adgg import ADGG
 from .terminal_output import Terminal
 
 import os
@@ -51,7 +52,7 @@ def login_page(request):
             return render(request, 'login.html')
     except KeyError as e:
         # ask the user to enter the username and/or password
-        terminal.tprint('Username/password not defined', 'warn')
+        terminal.tprint('Username/password not defined: %s' % str(e), 'warn')
         page_settings['message'] = "Please enter your username and password"
         return render(request, 'login.html', page_settings)
     except Exception as e:
@@ -71,7 +72,7 @@ def under_review_page(request):
 
 def landing_page(request):
     get_or_create_csrf_token(request)
-    return render(request, 'landing.html')
+    return render(request, 'landing_page.html')
 
 
 # @login_required(login_url='/login')
@@ -133,19 +134,35 @@ def update_db(request):
     return HttpResponse(json.dumps({'error': False, 'message': 'Database updated'}))
 
 
-def show_dashboard(request):
+def show_landing(request):
     csrf_token = get_or_create_csrf_token(request)
-
-    odk = OdkForms()
-    stats = odk.system_stats()
 
     page_settings = {
         'page_title': "%s | Home" % settings.SITE_NAME,
         'csrf_token': csrf_token,
-        'section_title': 'ADGG Overview',
-        'data': stats
+        'section_title': 'ADGG Home',
+        'data': {}
     }
-    return render(request, 'dash_home.html', page_settings)
+    return render(request, 'landing_page.html', page_settings)
+
+
+@login_required(login_url='/login')
+def show_dashboard(request):
+    csrf_token = get_or_create_csrf_token(request)
+
+    adgg = ADGG()
+    try:
+        stats = adgg.system_stats()
+        page_settings = {
+            'page_title': "%s | Home" % settings.SITE_NAME,
+            'csrf_token': csrf_token,
+            'section_title': 'ADGG Overview',
+            'data': stats
+        }
+        return render(request, 'dash_home.html', page_settings)
+    except Exception as e:
+        terminal.tprint('Error! %s' % str(e), 'fail')
+        show_landing(request)
 
 
 # @login_required(login_url='/login')
@@ -318,6 +335,7 @@ def return_json(mappings):
     response['Content-Message'] = to_return
     return response
 
+
 def return_polygons(mappings):
     to_return = json.dumps(mappings)
     response = HttpResponse(to_return)
@@ -450,6 +468,29 @@ def fetch_processing_status(request):
     response = HttpResponse(to_return, content_type='text/json')
     response['Content-Message'] = to_return
     return response
+
+
+def system_settings(request):
+    csrf_token = get_or_create_csrf_token(request)
+
+    page_settings = {
+        'page_title': "%s | Home" % settings.SITE_NAME,
+        'csrf_token': csrf_token,
+        'section_title': 'Manage %s Settings' % settings.SITE_NAME
+    }
+    return render(request, 'system_settings.html', page_settings)
+
+
+def forms_settings(request):
+    csrf_token = get_or_create_csrf_token(request)
+
+    page_settings = {
+        'page_title': "%s | Home" % settings.SITE_NAME,
+        'csrf_token': csrf_token,
+        'section_title': 'Manage %s Forms' % settings.SITE_NAME
+    }
+    return render(request, 'forms_settings.html', page_settings)
+
 
 
 def zip_response(json_data):

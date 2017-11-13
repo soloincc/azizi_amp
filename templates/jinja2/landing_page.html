@@ -1,0 +1,616 @@
+	<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
+<!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->
+<!--[if !IE]><!--> <html lang="en"> <!--<![endif]-->
+<head>
+	<title>{{ page_title }}</title>
+
+	<!-- Meta -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<!-- Favicon -->
+	<link rel="shortcut icon" href="favicon.ico">
+
+	<!-- Web Fonts -->
+	<link rel='stylesheet' type='text/css' href='//fonts.googleapis.com/css?family=Open+Sans:400,300,600&amp;subset=cyrillic,latin'>
+
+	<!-- CSS Global Compulsory -->
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/bootstrap/css/bootstrap.min.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/css/one.style.css') }}">
+
+	<!-- CSS Footer -->
+	<link rel="stylesheet" href="{{ static('unify-assets/css/footers/footer-v7.css') }}">
+
+	<!-- CSS Implementing Plugins -->
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/animate.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/line-icons/line-icons.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/font-awesome/css/font-awesome.min.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/pace/pace-flash.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/owl-carousel/owl.carousel.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/cube-portfolio/cubeportfolio/css/cubeportfolio.min.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/cube-portfolio/cubeportfolio/custom/custom-cubeportfolio.css') }}">
+	<link rel="stylesheet" href="{{ static('unify-assets/plugins/revolution-slider/rs-plugin/css/settings.css') }}" type="text/css" media="screen">
+	<!--[if lt IE 9]><link rel="stylesheet" href="{{ static('unify-assets/plugins/revolution-slider/rs-plugin/css/settings-ie8.css') }}" type="text/css" media="screen"><![endif]-->
+
+	<!-- Style Switcher -->
+	<link rel="stylesheet" href="{{ static('unify-assets/css/plugins/style-switcher.css') }}">
+
+	<!-- CSS Theme -->
+	<link rel="stylesheet" href="{{ static('unify-assets/css/theme-colors/default.css') }}" id="style_color">
+	<link rel="stylesheet" href="{{ static('unify-assets/css/theme-skins/one.dark.css') }}">
+
+	<!-- CSS Customization -->
+	<link rel="stylesheet" href="{{ static('unify-assets/css/custom.css') }}">
+</head>
+
+<!--
+The #page-top ID is part of the scrolling feature.
+The data-spy and data-target are part of the built-in Bootstrap scrollspy function.
+-->
+<body id="body" data-spy="scroll" data-target=".one-page-header" class="demo-lightbox-gallery">
+
+	<!--=== Header ===-->
+	<nav class="one-page-header one-page-header-style-2 navbar navbar-default navbar-fixed-top" role="navigation">
+		<div class="container">
+			<div class="menu-container page-scroll">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+
+				<a class="navbar-brand" href="#intro">
+					ADGG
+					<!-- img src="{{ static('unify-assets/img/logo1.png') }}" alt="Logo" -->
+				</a>
+			</div>
+
+			<div class="lang-block">
+				<a href="javascript:void(0);" class="mega-hover__current" aria-haspopup="true">En</a>
+				<ul class="mega-hover-list">
+					<li><a href="#">En</a></li>
+					<li><a href="#">Sw</a></li>
+					<li><a href="#">Am</a></li>
+				</ul>
+			</div>
+
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse navbar-ex1-collapse">
+				<div class="menu-container">
+					<ul class="nav navbar-nav">
+						<li class="page-scroll home">
+							<a href="#intro">Home</a>
+						</li>
+						<li class="page-scroll">
+							<a href="#about">About Us</a>
+						</li>
+						<li class="page-scroll">
+							<a href="#vision">Vision</a>
+						</li>
+						<li class="page-scroll">
+							<a href="#team">Our Team</a>
+						</li>
+						<li class="page-scroll">
+							<a href="#contact">Contact</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<!-- /.navbar-collapse -->
+		</div>
+		<!-- /.container -->
+	</nav>
+	<!--=== End Header ===-->
+
+	<!-- Intro Section -->
+	<section id="intro" class="intro-section">
+		<div class="fullscreenbanner-container">
+			<div class="fullscreenbanner">
+				<ul>
+					<!-- SLIDE 1 -->
+					<li data-transition="curtain-1" data-slotamount="5" data-masterspeed="700" data-title="Slide 1">
+						<!-- MAIN IMAGE -->
+						<img src="{{ static('unify-assets/img/sliders/revolution/bg1.jpg') }}" alt="slidebg1" data-bgfit="cover" data-bgposition="center center" data-bgrepeat="no-repeat">
+
+						<!-- LAYERS -->
+						<div class="tp-caption rs-caption-1 sft start"
+							data-x="center"
+							data-hoffset="0"
+							data-y="100"
+							data-speed="800"
+							data-start="2000"
+							data-easing="Back.easeInOut"
+							data-endspeed="300">
+							WE ARE UNIFY CREATIVE TECHNOLOGY COMPANY
+						</div>
+
+						<!-- LAYER -->
+						<div class="tp-caption rs-caption-2 sft"
+							data-x="center"
+							data-hoffset="0"
+							data-y="200"
+							data-speed="1000"
+							data-start="3000"
+							data-easing="Power4.easeOut"
+							data-endspeed="300"
+							data-endeasing="Power1.easeIn"
+							data-captionhidden="off"
+							style="z-index: 6">
+							Creative freedom matters user experience.<br>
+							We minimize the gap between technology and its audience.
+						</div>
+
+						<!-- LAYER -->
+						<div class="tp-caption rs-caption-3 sft"
+							data-x="center"
+							data-hoffset="0"
+							data-y="360"
+							data-speed="800"
+							data-start="3500"
+							data-easing="Power4.easeOut"
+							data-endspeed="300"
+							data-endeasing="Power1.easeIn"
+							data-captionhidden="off"
+							style="z-index: 6">
+							<span class="page-scroll"><a href="dashboard" class="btn-u btn-brd btn-brd-hover btn-u-light">Dashboard</a></span>
+							<span class="page-scroll"><a href="https://africadgg.wordpress.com/" class="btn-u btn-brd btn-brd-hover btn-u-light">Read More</a></span>
+						</div>
+					</li>
+
+					<!-- SLIDE 2 -->
+					<li data-transition="slideup" data-slotamount="5" data-masterspeed="1000" data-title="Slide 2">
+						<!-- MAIN IMAGE -->
+						<img src="{{ static('unify-assets/img/sliders/revolution/bg2.jpg') }}" alt="slidebg1"  data-bgfit="cover" data-bgposition="center center" data-bgrepeat="no-repeat">
+
+						<!-- LAYERS -->
+						<div class="tp-caption rs-caption-1 sft start"
+							data-x="center"
+							data-hoffset="0"
+							data-y="100"
+							data-speed="800"
+							data-start="1500"
+							data-easing="Back.easeInOut"
+							data-endspeed="300">
+							DEDICATED ADVANCED TEAM
+						</div>
+
+						<!-- LAYER -->
+						<div class="tp-caption rs-caption-2 sft"
+							data-x="center"
+							data-hoffset="0"
+							data-y="200"
+							data-speed="1000"
+							data-start="2500"
+							data-easing="Power4.easeOut"
+							data-endspeed="300"
+							data-endeasing="Power1.easeIn"
+							data-captionhidden="off"
+							style="z-index: 6">
+							We are creative technology company providing<br>
+							key digital services on web and mobile.
+						</div>
+
+						<!-- LAYER -->
+						<div class="tp-caption rs-caption-3 sft"
+							data-x="center"
+							data-hoffset="0"
+							data-y="360"
+							data-speed="800"
+							data-start="3500"
+							data-easing="Power4.easeOut"
+							data-endspeed="300"
+							data-endeasing="Power1.easeIn"
+							data-captionhidden="off"
+							style="z-index: 6">
+							<span class="page-scroll"><a href="/dashboard" class="btn-u btn-brd btn-brd-hover btn-u-light">Dashboard</a></span>
+							<span class="page-scroll"><a href="https://africadgg.wordpress.com/" class="btn-u btn-brd btn-brd-hover btn-u-light">Read More</a></span>
+						</div>
+					</li>
+
+					<!-- SLIDE 3 -->
+					<li data-transition="slideup" data-slotamount="5" data-masterspeed="700"  data-title="Slide 3">
+						<!-- MAIN IMAGE -->
+						<img src="{{ static('unify-assets/img/sliders/revolution/bg3.jpg') }}"  alt="slidebg1"  data-bgfit="cover" data-bgposition="center center" data-bgrepeat="no-repeat">
+
+						<!-- LAYERS -->
+						<div class="tp-caption rs-caption-1 sft start"
+							data-x="center"
+							data-hoffset="0"
+							data-y="110"
+							data-speed="800"
+							data-start="1500"
+							data-easing="Back.easeInOut"
+							data-endspeed="300">
+							WE DO THINGS DIFFERENTLY
+						</div>
+
+						<!-- LAYER -->
+						<div class="tp-caption rs-caption-2 sfb"
+							data-x="center"
+							data-hoffset="0"
+							data-y="210"
+							data-speed="800"
+							data-start="2500"
+							data-easing="Power4.easeOut"
+							data-endspeed="300"
+							data-endeasing="Power1.easeIn"
+							data-captionhidden="off"
+							style="z-index: 6">
+							Creative freedom matters user experience.<br>
+							We minimize the gap between technology and its audience.
+						</div>
+
+						<!-- LAYER -->
+						<div class="tp-caption rs-caption-3 sfb"
+							data-x="center"
+							data-hoffset="0"
+							data-y="370"
+							data-speed="800"
+							data-start="3500"
+							data-easing="Power4.easeOut"
+							data-endspeed="300"
+							data-endeasing="Power1.easeIn"
+							data-captionhidden="off"
+							style="z-index: 6">
+							<span class="page-scroll"><a href="/dashboard" class="btn-u btn-brd btn-brd-hover btn-u-light">Dashboard</a></span>
+							<span class="page-scroll"><a href="https://africadgg.wordpress.com/" class="btn-u btn-brd btn-brd-hover btn-u-light">Read More</a></span>
+						</div>
+					</li>
+				</ul>
+				<div class="tp-bannertimer tp-bottom"></div>
+				<div class="tp-dottedoverlay twoxtwo"></div>
+			</div>
+		</div>
+	</section>
+	<!-- End Intro Section -->
+
+	<!-- About Section -->
+	<section id="about" class="about-section section-first">
+		<div class="container content-sm">
+			<div class="text-center margin-bottom-50">
+				<h2 class="title-v2 title-center">About Us</h2>
+				<p class="space-lg-hor">The <span class="color-green"><strong>African Dairy Genetic Gain (ADGG)</strong></span> is an International Livestock Research Institute (ILRI)-led investment by the Bill & Melinda Gates Foundation (BMGF) that is developing and testing a multi-country genetic gains platform that uses on-farm performance information and basic genomic data to identify and provide superior cross-bred bulls for artificial insemination (AI) delivery and planned natural mating to smallholder farmers in Africa.</p>
+			</div>
+
+			<div class="row content-boxes-v4">
+				<div class="col-md-4 md-margin-bottom-40">
+					<i class="pull-left fa fa-lightbulb-o"></i>
+					<div class="content-boxes-in-v4">
+						<h2>Performance Recording</h2>
+						<p>Establishing performance recording and sampling systems in Tanzania and Ethiopia.</p>
+						<a href="#">Learn More</a>
+					</div>
+				</div>
+				<div class="col-md-4 md-margin-bottom-40">
+					<i class="pull-left fa fa-flash"></i>
+					<div class="content-boxes-in-v4">
+						<h2>Feedback Systems</h2>
+						<p>Piloting farmer-feedback systems that assist farmers to improve their productivity.</p>
+						<a href="#">Learn More</a>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<i class="pull-left fa fa-compress"></i>
+					<div class="content-boxes-in-v4">
+						<h2>Genetic Selection</h2>
+						<p>Using the information and samples to develop systems to select cross-bred bulls and cows of superior genetic merit for AI and natural mating.</p>
+						<a href="#">Learn More</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-grey content-sm">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-6">
+						<div class="responsive-video margin-bottom-30">
+							<iframe width="560" height="315" src="https://www.youtube.com/embed/nvtoCEzdaQA" frameborder="0" allowfullscreen></iframe>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<h2 class="title-v2">WATCH ABOUT US</h2>
+						<p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable.</p>
+						<p>If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet.</p><br>
+						<a href="#" class="btn-u btn-brd btn-brd-hover btn-u-dark">Read More</a>
+						<a href="#" class="btn-u">Purchase Now</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="parallax-counter-v1 parallaxBg">
+			<div class="container">
+				<h2 class="title-v2 title-light title-center">SOME FACTS AND SERVICES</h2>
+				<p class="space-xlg-hor text-center color-light">If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary.</p>
+
+				<div class="margin-bottom-40"></div>
+
+				<div class="row margin-bottom-10">
+					<div class="col-sm-3 col-xs-6 md-margin-bottom-10">
+						<div class="counters">
+							<span class="counter">10629</span>
+							<h4>Users</h4>
+						</div>
+					</div>
+					<div class="col-sm-3 col-xs-6 md-margin-bottom-10">
+						<div class="counters">
+							<span class="counter">277</span>
+							<h4>Projects</h4>
+						</div>
+					</div>
+					<div class="col-sm-3 col-xs-6">
+						<div class="counters">
+							<span class="counter">78</span>
+							<h4>Team Members</h4>
+						</div>
+					</div>
+					<div class="col-sm-3 col-xs-6">
+						<div class="counters">
+							<span class="counter">109</span>
+							<h4>Awards</h4>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- End About Section -->
+
+	<!--  Vision Section -->
+	<section id="vision" class="about-section section-first">
+
+		<div class="container content-lg">
+			<div class="title-v1">
+				<h2>Our Vision And Mission</h2>
+				<p>We <strong>meet</strong> and get to know you. You tell us and we listen. <br>
+				We build your website to realise your vision and we <strong>deliver</strong> the ready product.</p>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6 content-boxes-v3 margin-bottom-40">
+					<div class="clearfix margin-bottom-30">
+						<i class="icon-custom icon-md rounded-x icon-bg-u icon-line icon-trophy"></i>
+						<div class="content-boxes-in-v3">
+							<h2 class="heading-sm">Innovation Leader</h2>
+							<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's</p>
+						</div>
+					</div>
+					<div class="clearfix margin-bottom-30">
+						<i class="icon-custom icon-md rounded-x icon-bg-u icon-line icon-directions"></i>
+						<div class="content-boxes-in-v3">
+							<h2 class="heading-sm">Best Solutions &amp; Approaches</h2>
+							<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's</p>
+						</div>
+					</div>
+					<div class="clearfix margin-bottom-30">
+						<i class="icon-custom icon-md rounded-x icon-bg-u icon-line icon-diamond"></i>
+						<div class="content-boxes-in-v3">
+							<h2 class="heading-sm">Quality Service &amp; Support</h2>
+							<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-6">
+					<img class="img-responsive" src="{{ static('unify-assets/img/mockup/mockup1.png') }}" alt="">
+				</div>
+			</div>
+		</div>
+
+		<div class="parallax-quote parallaxBg">
+			<div class="container">
+				<div class="parallax-quote-in">
+					<p>If you can design one thing <span class="color-green">you can design</span> everything. <br> Just Believe It.</p>
+					<small>- HtmlStream -</small>
+				</div>
+			</div>
+		</div>
+
+	</section>
+	<!--  End Vision Section -->
+
+	<!--  Team Section -->
+	<section id="team" class="about-section section-first">
+		<div class="team-v1 bg-grey content-lg">
+			<div class="container">
+				<div class="title-v1">
+					<h2>Meet Our Team</h2>
+					<p>We <strong>meet</strong> and get to know you. You tell us and we listen. <br>
+					We build your website to realise your vision and we <strong>deliver</strong> the ready product.</p>
+				</div>
+
+				<ul class="list-unstyled row">
+					<li class="col-sm-3 col-xs-6 md-margin-bottom-30">
+						<div class="team-img">
+							<img class="img-responsive" src="{{ static('unify-assets/img/team/img1-md.jpg') }}" alt="">
+							<ul>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-twitter"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-facebook"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-google-plus"></i></a></li>
+							</ul>
+						</div>
+						<h3>John Brown</h3>
+						<h4>/ Technical Director</h4>
+						<p>Technical Director mi porta gravida at eget metus id elit mi egetine...</p>
+					</li>
+					<li class="col-sm-3 col-xs-6 md-margin-bottom-30">
+						<div class="team-img">
+							<img class="img-responsive" src="{{ static('unify-assets/img/team/img2-md.jpg') }}" alt="">
+							<ul>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-twitter"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-facebook"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-google-plus"></i></a></li>
+							</ul>
+						</div>
+						<h3>Tina Krueger</h3>
+						<h4>/ Lead Designer</h4>
+						<p>Lead Designer mi porta gravida at eget metus id elit mi egetine...</p>
+					</li>
+					<li class="col-sm-3 col-xs-6">
+						<div class="team-img">
+							<img class="img-responsive" src="{{ static('unify-assets/img/team/img3-md.jpg') }}" alt="">
+							<ul>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-twitter"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-facebook"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-google-plus"></i></a></li>
+							</ul>
+						</div>
+						<h3>David Case</h3>
+						<h4>/ Web Developer</h4>
+						<p>Web Developer in Unify agency porta gravida at eget metus id elit...</p>
+					</li>
+					<li class="col-sm-3 col-xs-6">
+						<div class="team-img">
+							<img class="img-responsive" src="{{ static('unify-assets/img/team/img5-md.jpg') }}" alt="">
+							<ul>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-twitter"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-facebook"></i></a></li>
+								<li><a href="#"><i class="icon-custom icon-sm rounded-x fa fa-google-plus"></i></a></li>
+							</ul>
+						</div>
+						<h3>Kathy Reyes</h3>
+						<h4>/ Creative Designer</h4>
+						<p>Former Designer in Twitter non mi porta gravida at elit mi egetine...</p>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</section>
+	<!--  End Team Section -->
+
+	<!-- Contact Section -->
+	<section id="contact" class="contacts-section">
+		<div class="container content-lg">
+			<div class="title-v1">
+				<h2>Contact Us</h2>
+				<p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. <br>
+				It has been the industry's standard dummy text.</p>
+			</div>
+
+			<div class="row contacts-in">
+				<div class="col-md-6 md-margin-bottom-40">
+					<ul class="list-unstyled">
+						<li><i class="fa fa-home"></i> 5B Streat, City 50987 New Town US</li>
+						<li><i class="fa fa-phone"></i> 1(800) 220 084</li>
+						<li><i class="fa fa-envelope"></i> <a href="info@example.com">info@example.com</a></li>
+						<li><i class="fa fa-globe"></i> <a href="http://htmlstream.com">www.htmlstream.com</a></li>
+					</ul>
+				</div>
+
+				<div class="col-md-6">
+					<form action="assets/php/sky-forms-pro/demo-contacts-process.php" method="post" id="sky-form3" class="sky-form contact-style">
+						<fieldset>
+							<label>Name</label>
+							<div class="row">
+								<div class="col-md-7 margin-bottom-20 col-md-offset-0">
+									<div>
+										<input type="text" name="name" id="name" class="form-control">
+									</div>
+								</div>
+							</div>
+
+							<label>Email <span class="color-red">*</span></label>
+							<div class="row">
+								<div class="col-md-7 margin-bottom-20 col-md-offset-0">
+									<div>
+										<input type="text" name="email" id="email" class="form-control">
+									</div>
+								</div>
+							</div>
+
+							<label>Message</label>
+							<div class="row">
+								<div class="col-md-11 margin-bottom-20 col-md-offset-0">
+									<div>
+										<textarea rows="8" name="message" id="message" class="form-control"></textarea>
+									</div>
+								</div>
+							</div>
+
+							<p><button type="submit" class="btn-u btn-brd btn-brd-hover btn-u-dark">Send Message</button></p>
+						</fieldset>
+
+						<div class="message">
+							<i class="rounded-x fa fa-check"></i>
+							<p>Your message was successfully sent!</p>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="copyright-section">
+			<p>2015 &copy; All Rights Reserved. Unify Theme by <a target="_blank" href="https://twitter.com/htmlstream">Htmlstream</a></p>
+			<ul class="social-icons">
+				<li><a href="#" data-original-title="Facebook" class="social_facebook rounded-x"></a></li>
+				<li><a href="#" data-original-title="Twitter" class="social_twitter rounded-x"></a></li>
+				<li><a href="#" data-original-title="Goole Plus" class="social_googleplus rounded-x"></a></li>
+				<li><a href="#" data-original-title="Pinterest" class="social_pintrest rounded-x"></a></li>
+				<li><a href="#" data-original-title="Linkedin" class="social_linkedin rounded-x"></a></li>
+			</ul>
+			<span class="page-scroll"><a href="#intro"><i class="fa fa-angle-double-up back-to-top"></i></a></span>
+		</div>
+	</section>
+	<!-- End Contact Section -->
+	<div class="footer">
+            <div class="pull-right">
+                Designed and Developed by <strong><a href='https://badili.co.ke'>Badili Innovations</a></strong>
+            </div>
+        </div>
+	
+	<!-- JS Global Compulsory -->
+	<script src="{{ static('unify-assets/plugins/jquery/jquery.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/jquery/jquery-migrate.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+	<!-- JS Implementing Plugins -->
+	<script src="{{ static('unify-assets/plugins/smoothScroll.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/jquery.easing.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/pace/pace.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/jquery.parallax.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/counter/waypoints.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/counter/jquery.counterup.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/owl-carousel/owl.carousel.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/sky-forms-pro/skyforms/js/jquery.form.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/sky-forms-pro/skyforms/js/jquery.validate.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/revolution-slider/rs-plugin/js/jquery.themepunch.tools.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/revolution-slider/rs-plugin/js/jquery.themepunch.revolution.min.js') }}"></script>
+	<script src="{{ static('unify-assets/plugins/cube-portfolio/cubeportfolio/js/jquery.cubeportfolio.min.js') }}"></script>
+
+	<!-- JS Page Level-->
+	<script src="{{ static('unify-assets/js/one.app.js') }}"></script>
+	<script src="{{ static('unify-assets/js/forms/login.js') }}"></script>
+	<script src="{{ static('unify-assets/js/forms/contact.js') }}"></script>
+	<script src="{{ static('unify-assets/js/plugins/pace-loader.js') }}"></script>
+	<script src="{{ static('unify-assets/js/plugins/owl-carousel.js') }}"></script>
+	<script src="{{ static('unify-assets/js/plugins/style-switcher.js') }}"></script>
+	<script src="{{ static('unify-assets/js/plugins/revolution-slider.js') }}"></script>
+	<script src="{{ static('unify-assets/js/plugins/cube-portfolio/cube-portfolio-lightbox.js') }}"></script>
+	<script>
+		jQuery(document).ready(function() {
+			App.init();
+			App.initCounter();
+			App.initParallaxBg();
+			LoginForm.initLoginForm();
+			ContactForm.initContactForm();
+			OwlCarousel.initOwlCarousel();
+			StyleSwitcher.initStyleSwitcher();
+			RevolutionSlider.initRSfullScreen();
+		});
+	</script>
+	<!--[if lt IE 9]>
+		<script src="{{ static('unify-assets/plugins/respond.js') }}"></script>
+		<script src="{{ static('unify-assets/plugins/html5shiv.js') }}"></script>
+		<script src="{{ static('unify-assets/js/plugins/placeholder-IE-fixes.js') }}"></script>
+		<script src="{{ static('unify-assets/plugins/sky-forms-pro/skyforms/js/sky-forms-ie8.js') }}"></script>
+	<![endif]-->
+
+	<!--[if lt IE 10]>
+		<script src="{{ static('unify-assets/plugins/sky-forms-pro/skyforms/js/jquery.placeholder.min.js') }}"></script>
+	<![endif]-->
+</body>
+</html>
