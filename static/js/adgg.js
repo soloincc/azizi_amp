@@ -1260,4 +1260,139 @@ BadiliDash.prototype.initiateProcessingStatus = function(){
     });
 };
 
+BadiliDash.prototype.initiate_adgg_dash = function(){
+    // Show the household head distribution by gender
+    Highcharts.chart('farmers_gender_dist', {
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'pie'
+        },
+        credits: {
+            enabled: false
+        },
+        title: {
+            text: null
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: false
+                },
+                showInLegend: true
+            }
+        },
+        series: [{
+            name: 'Sex',
+            colorByPoint: true,
+            data: dash.data.farmers.by_gender
+        }]
+    });
+    // Show the animal distribution by gender
+    Highcharts.chart('animals_dist', {
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'pie'
+        },
+        credits: {
+            enabled: false
+        },
+        title: {
+            text: null
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: false
+                },
+                showInLegend: true
+            }
+        },
+        series: [{
+            name: 'Sex',
+            colorByPoint: true,
+            data: dash.data.animals.by_sex
+        }]
+    });
+    // Show the processing status
+    Highcharts.chart('farmer_reg_processing', {
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'pie'
+        },
+        credits: {
+            enabled: false
+        },
+        title: {
+            text: 'Human Registrations'
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: false
+                },
+                showInLegend: true
+            }
+        },
+        series: [{
+            name: 'Farmer Reg Processing',
+            colorByPoint: true,
+            data: dash.data.formgroups.processing_status.farmer_reg
+        }]
+    });
+    // Show the processing status
+    Highcharts.chart('animal_reg_processing', {
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'pie'
+        },
+        credits: {
+            enabled: false
+        },
+        title: {
+            text: 'Animal Registrations'
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: false
+                },
+                showInLegend: true
+            }
+        },
+        series: [{
+            name: 'Animal Reg Processing',
+            colorByPoint: true,
+            data: dash.data.formgroups.processing_status.animal_reg
+        }]
+    });
+};
+
 var dash = new BadiliDash();

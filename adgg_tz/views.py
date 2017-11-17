@@ -157,7 +157,8 @@ def show_dashboard(request):
             'page_title': "%s | Home" % settings.SITE_NAME,
             'csrf_token': csrf_token,
             'section_title': 'ADGG Overview',
-            'data': stats
+            'data': stats,
+            'js_data': json.dumps(stats)
         }
         return render(request, 'dash_home.html', page_settings)
     except Exception as e:
@@ -386,8 +387,8 @@ def fetch_processing_errors(request):
     sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
     queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
 
-    odk = OdkForms()
-    (is_success, proc_errors) = odk.processing_errors(cur_page, per_page, offset, sorts, queries)
+    adgg = ADGG()
+    (is_success, proc_errors) = adgg.processing_errors(cur_page, per_page, offset, sorts, queries)
     to_return = json.dumps(proc_errors)
 
     response = HttpResponse(to_return, content_type='text/json')
@@ -490,7 +491,6 @@ def forms_settings(request):
         'section_title': 'Manage %s Forms' % settings.SITE_NAME
     }
     return render(request, 'forms_settings.html', page_settings)
-
 
 
 def zip_response(json_data):

@@ -46,3 +46,4 @@ body { margin: 0;   padding: 0;  min-width: 900px; }
 
 .ibox-tools button.alert {padding: 7px; margin-bottom: 0px;}
 .navbar-default .nav > li > a:hover, .navbar-default .nav > li > a:focus, .nav > li.active{ background: #54103c; }
+#farmer_reg_processing, #animal_reg_processing, #farmers_gender_dist, #animals_dist{ height: 250px; }
