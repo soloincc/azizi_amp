@@ -161,6 +161,10 @@ class ADGG():
         return stats
 
     def formgroup_processing_status(self):
+        """Fetch the processing status of the form groups
+        Returns:
+            JSON: A json with the processing statuses of the form groups
+        """
         with connection.cursor() as cursor:
             form_details_q = 'SELECT c.group_name, a.is_processed, count(*) as r_count FROM raw_submissions as a INNER JOIN odkform as b on a.form_id=b.id INNER JOIN form_groups as c on b.form_group_id=c.id GROUP BY c.group_name, a.is_processed ORDER BY c.group_name, b.form_id, a.is_processed'
             cursor.execute(form_details_q)
@@ -182,3 +186,32 @@ class ADGG():
                     })
 
         return processing_status
+
+    def landing_page_stats(self):
+        """Fetches the statistics that will be used in the landing page
+        Raises:
+            AssertionError: Raises an error if there is nothing in the database
+        """
+        stats = defaultdict(dict)
+        stats['farmers'] = defaultdict(dict)
+        stats['animals'] = defaultdict(dict)
+
+        with connections['mapped'].cursor() as cursor:
+            # get the number of processed farmers
+            farmers_q = "SELECT count(*) as count from households"
+            cursor.execute(farmers_q)
+            farmers = cursor.fetchone()
+            if farmers is None:
+                raise AssertionError('There was some error while fetching data from the database')
+
+            # get the number of processed animals
+            animals_q = "SELECT count(*) as count from animals"
+            cursor.execute(animals_q)
+            animals = cursor.fetchone()
+            if animals is None:
+                raise AssertionError('There was some error while fetching data from the database')
+
+            stats['farmers']['count'] = farmers[0]
+            stats['animals']['count'] = animals[0]
+
+        return stats

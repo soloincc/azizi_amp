@@ -63,7 +63,7 @@ def login_page(request):
 
 def logout_view(request):
     logout(request)
-    return render(request, 'landing.html')
+    return show_landing(request)
 
 
 def under_review_page(request):
@@ -137,11 +137,13 @@ def update_db(request):
 def show_landing(request):
     csrf_token = get_or_create_csrf_token(request)
 
+    adgg = ADGG()
+    stats = adgg.landing_page_stats()
     page_settings = {
         'page_title': "%s | Home" % settings.SITE_NAME,
         'csrf_token': csrf_token,
         'section_title': 'ADGG Home',
-        'data': {}
+        'data': stats
     }
     return render(request, 'landing_page.html', page_settings)
 
