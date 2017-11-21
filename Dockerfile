@@ -23,9 +23,9 @@ RUN set -ex \
                     | sort -u \
                     | xargs -r apk info --installed \
                     | sort -u \
-    )" \
-    && apk add --virtual .python-rundeps $runDeps \
-    && apk del .build-deps
+    )"
+#    && apt-get install --virtual .python-rundeps $runDeps \
+#     && apk del .build-deps
 
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
 RUN mkdir /azizi_amp/
