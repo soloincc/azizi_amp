@@ -7,23 +7,14 @@
 
     <title>{{ page_title }}</title>
 
-    {% if old_bootstrap is defined %}
-        <link rel="stylesheet" href="{{ static('bootstrap_2.3.2/css/bootstrap.min.css') }}" />
-    {% else %}
-        <link rel="stylesheet" href="{{ static('bower/bootstrap/dist/css/bootstrap.min.css') }}" />
-    {% endif %}
-    
+    <link rel="stylesheet" href="{{ static('bower/bootstrap/dist/css/bootstrap.min.css') }}" />
     <link rel="stylesheet" href="{{ static('plugins/font-awesome/css/font-awesome.min.css') }}" />
     <link rel="stylesheet" href="{{ static('css/animate.css') }}" />
     <link rel="stylesheet" href="{{ static('css/style.css') }}" />
     <link rel="stylesheet" href="{{ static('bower/sweetalert/dist/sweetalert.css') }}" />
 
     <script type='text/javascript' src="{{ static('bower/jquery/dist/jquery.min.js') }}"></script>
-    {% if old_bootstrap is defined %}
-        <script type='text/javascript' src="{{ static('bootstrap_2.3.2/js/bootstrap.min.js') }}"></script>
-    {% else %}
-        <script type='text/javascript' src="{{ static('bower/bootstrap/dist/js/bootstrap.min.js') }}"></script>
-    {% endif %}
+    <script type='text/javascript' src="{{ static('bower/bootstrap/dist/js/bootstrap.min.js') }}"></script>
     <script type='text/javascript' src="{{ static('js/sprintf.js') }}"></script>
 
 </head>
