@@ -1,0 +1,11 @@
+# git folder
+.git
+# bower files
+static/bower
+
+# standard ignores
+Dockerfile
+.DS_Store
+.gitignore
+README.md
+env.*
