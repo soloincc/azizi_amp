@@ -34,7 +34,7 @@
     "chartjs": "^2.5.0",
     "d3-cloud": "https://github.com/jasondavies/d3-cloud.git",
     "d3": "^3.5.14",
-    "highcharts": "^5.0.14",
+    "highcharts": "^6.0.3",
     "json-editor": "https://github.com/jdorn/json-editor.git",
     "bootstrap-table": "^1.11.1",
     "dynatable": "https://github.com/alfajango/jquery-dynatable.git"
