@@ -1395,4 +1395,73 @@ BadiliDash.prototype.initiate_adgg_dash = function(){
     });
 };
 
+BadiliDash.prototype.initiateFormSettingsPage = function(){
+    dash.error_table = $('#form_settings_table').dynatable({
+      dataset: {
+        paginate: true,
+        recordCount: true,
+        sorting: true,
+        ajax: true,
+        ajaxUrl: '/forms_settings_info/',
+        ajaxOnLoad: true,
+        records: []
+      }
+    });
+};
+
+BadiliDash.prototype.refreshODKFormsTable = function(data){
+    // create the grid with the views data
+    var $editor = $('#form-edit-modal');
+    var ft;
+    var columns = [
+        {'name': 'form_id', 'title': 'ID', 'visible': false},
+        {"name":"_selection", "title" : "Selection", 'visible': false, "sortable": false, "filterable":false},
+        {"name":"_checkbox", "title" : "<input type='checkbox' class='global-checkbox'>", 'visible': true, "sortable": false, "filterable":false},
+        {'name': 'form_group', 'title': 'Form Group'},
+        {'name': 'form_name', 'title': 'Form Name'},
+        {'name': 'full_form_id', 'title': 'Full Form ID'},
+        {'name': 'auto_update', 'title': 'Auto Process'},
+        {'name': 'is_source_deleted', 'title': 'Is Source Deleted'}
+    ];
+
+    if(dash.ft == undefined){
+        dash.ft = FooTable.init('#form_settings_table', {
+            columns: columns,
+            rows: data,
+            editing: {
+                alwaysShow: true,
+                editRow: function(row){
+                    var values = row.val();
+                    $editor.find('#form_id').val(values.mapping_id);
+                    if (values.auto_update == true){
+                        $editor.find('#auto_update_yes').prop('checked', true);
+                    }
+                    else{
+                        $editor.find('#auto_update_no').prop('checked', true);
+                    }
+                    if (values.is_source_deleted == true){
+                        $editor.find('#is_source_deleted_yes').prop('checked', true);
+                    }
+                    else{
+                        $editor.find('#is_source_deleted_no').prop('checked', true);
+                    }
+                    $modal.data('row', row);
+                    $editorTitle.text(sprintf('Editing the form settings for %s', values.form_name));
+                    $modal.modal('show');
+                },
+                deleteRow: dash.deleteMapping
+            }
+        }),
+        uid = 10001;
+        $editor.on('submit', dash.submitMappingEdits);
+    }
+    else{
+        dash.ft.rows.load(data);
+    }
+    if(data.length != 0){
+        $('#test_mappings').removeClass('disabled');
+        $('#clear_mappings').removeClass('disabled');
+    }
+};
+
 var dash = new BadiliDash();

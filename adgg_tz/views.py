@@ -389,8 +389,8 @@ def fetch_processing_errors(request):
     sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
     queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
 
-    adgg = ADGG()
-    (is_success, proc_errors) = adgg.processing_errors(cur_page, per_page, offset, sorts, queries)
+    odk = OdkForms()
+    (is_success, proc_errors) = odk.processing_errors(cur_page, per_page, offset, sorts, queries)
     to_return = json.dumps(proc_errors)
 
     response = HttpResponse(to_return, content_type='text/json')
@@ -493,6 +493,22 @@ def forms_settings(request):
         'section_title': 'Manage %s Forms' % settings.SITE_NAME
     }
     return render(request, 'forms_settings.html', page_settings)
+
+
+def forms_settings_info(request):
+    cur_page = json.loads(request.GET['page'])
+    per_page = json.loads(request.GET['perPage'])
+    offset = json.loads(request.GET['offset'])
+    sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
+    queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
+
+    odk = OdkForms()
+    (is_success, proc_errors) = odk.get_odk_forms_info(cur_page, per_page, offset, sorts, queries)
+    to_return = json.dumps(proc_errors)
+
+    response = HttpResponse(to_return, content_type='text/json')
+    response['Content-Message'] = to_return
+    return response
 
 
 def zip_response(json_data):
