@@ -5,16 +5,9 @@ MAINTAINER Wangoru Kihara wangoru.kihara@badili.co.ke
 # Add the application resources URL
 # RUN echo "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc) main universe" >> /etc/apt/sources.list
 
-RUN apt-get update && \
-    apt-get upgrade -y
-
-# Install mariadb server sources
-RUN apt-get install -y software-properties-common python-software-properties && \
-    apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8 && \
-    add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu xenial main'
-
 # Install build deps, then run `pip install`, then remove unneeded build deps all in a single step. Correct the path to your production requirements file, if needed.
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y \
     git \
     python \
