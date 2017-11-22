@@ -2,9 +2,6 @@ FROM ubuntu:16.04
 
 MAINTAINER Wangoru Kihara wangoru.kihara@badili.co.ke
 
-# Add the application resources URL
-# RUN echo "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc) main universe" >> /etc/apt/sources.list
-
 # Install build deps, then run `pip install`, then remove unneeded build deps all in a single step. Correct the path to your production requirements file, if needed.
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -15,10 +12,11 @@ RUN apt-get update && \
     python-setuptools \
     python-pip \
     nginx \
-    mariadb-server
+    libmysqlclient-dev
 
 # install uwsgi now because it takes a little while
-RUN pip install uwsgi
+RUN pip install --upgrade pip && \
+    pip install uwsgi
 
 # setup all the configfiles
 # RUN echo "daemon off;" >> /etc/nginx/nginx.conf
