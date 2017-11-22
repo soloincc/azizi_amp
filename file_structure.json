@@ -1,0 +1,12 @@
+{
+  "makefolders":[
+    "var/lib/mysql",
+    "/opt/azizi_amp"
+  ],
+  "copyfiles":[
+    {
+      "source":".",
+      "destination":"/opt/azizi_amp"
+    }
+  ]
+}
