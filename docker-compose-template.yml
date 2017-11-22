@@ -1,0 +1,54 @@
+version: '2'
+
+services:
+  §§INSTANCE-azizi_amp-db:
+    container_name: §§INSTANCE-azizi_amp-db
+    restart: unless-stopped
+    networks:
+      - bibbox-default-network
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=§§MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=§§MYSQL_DATABASE
+      - MYSQL_USER=§§MYSQL_USER
+      - MYSQL_PASSWORD=§§MYSQL_PASSWORD
+    depends_on:
+      - §§INSTANCE-azizi_amp-data
+    volumes_from: 
+      - §§INSTANCE-azizi_amp-data
+
+  §§INSTANCE-azizi_amp-web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8089
+    environment:
+      - MYSQL_ROOT_PASSWORD=§§MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=§§MYSQL_DATABASE
+      - MYSQL_USER=§§MYSQL_USER
+      - MYSQL_PASSWORD=§§MYSQL_PASSWORD
+
+      # Variables for the mapped database instance
+      - MAPPPED_DATABASE=§§MAPPPED_DATABASE
+      - MAPPED_USER=§§MAPPED_USER
+      - MAPPED_PASSWORD=§§MAPPED_PASSWORD
+      - MAPPED_HOST=§§MAPPED_HOST
+
+      # Variables for the Onadata server
+      - ONA_HOST=§§ONA_HOST
+      - ONA_USER=§§ONA_USER
+      - ONA_PASSWORD=§§ONA_PASSWORD
+      - ONA_API=§§ONA_API
+      
+    ports:
+      - "§§PORT:8089"
+    depends_on:
+      - §§INSTANCE-azizi_amp-db
+      - §§INSTANCE-azizi_amp-data
+    volumes_from: 
+      - §§INSTANCE-azizi_amp-data
+
+  §§INSTANCE-azizi_amp-data:
+    image: busybox
+    container_name: §§INSTANCE-azizi_amp-data
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./opt/azizi_amp:/opt/azizi_amp
