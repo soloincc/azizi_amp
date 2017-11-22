@@ -29,9 +29,9 @@ RUN pip install -r /opt/azizi_amp/requirements.txt
 COPY . /opt/azizi_amp/
 
 # uWSGI will listen on this port
-EXPOSE 8089
+# EXPOSE 8089
 
-CMD ["uwsgi", "--ini", "/opt/azizi-amp/default_uwsgi.ini"]
+# CMD ["uwsgi", "--ini", "/opt/azizi-amp/default_uwsgi.ini"]
 
 WORKDIR /opt/azizi_amp
 
