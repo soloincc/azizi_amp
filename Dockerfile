@@ -1,52 +1,42 @@
-FROM ubuntu:16.04
+FROM python:2.7
 
 MAINTAINER Wangoru Kihara wangoru.kihara@badili.co.ke
 
 # Install build deps, then run `pip install`, then remove unneeded build deps all in a single step. Correct the path to your production requirements file, if needed.
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y \
-    git \
-    python \
-    python-dev \
-    python-setuptools \
-    python-pip \
-    nginx \
-    libmysqlclient-dev
+    apt-get install -y
+#     git \
+#     python \
+#     python-dev \
+#     python-setuptools \
+#     python-pip \
+#     nginx \
+#     libmysqlclient-dev
 
 # install uwsgi now because it takes a little while
 RUN pip install --upgrade pip && \
     pip install uwsgi
 
-# setup all the configfiles
-# RUN echo "daemon off;" >> /etc/nginx/nginx.conf
-# COPY nginx-app.conf /etc/nginx/sites-available/default
-
-# COPY requirements.txt and RUN pip install BEFORE adding the rest of your code, this will cause Docker's caching mechanism
-# to prevent re-installinig (all your) dependencies when you made a change a line or two in your app.
-
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
 RUN mkdir /opt/azizi_amp/
 
+# Copy the requirements file and install the requirements
 COPY requirements.txt /opt/azizi_amp/
 RUN pip install -r /opt/azizi_amp/requirements.txt
 
 # add (the rest of) our code
 COPY . /opt/azizi_amp/
 
-# install django, normally you would remove this step because your project would already
-# be installed in the code/app/ directory
-# RUN django-admin.py startproject website /home/docker/code/app/
-
-ADD . /opt/azizi_amp/
-
 # uWSGI will listen on this port
 EXPOSE 8089
+
+CMD ["uwsgi", "--ini", "/opt/azizi-amp/default_uwsgi.ini"]
 
 WORKDIR /opt/azizi_amp
 
 # Manually start the server for now
-CMD python manage.py runserver
+# CMD python manage.py runserver
 
 # Add any custom, static environment variables needed by Django or your settings file here:
 # ENV DJANGO_SETTINGS_MODULE=azizi_amp.settings
