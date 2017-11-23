@@ -26,7 +26,7 @@ services:
       - MYSQL_HOST=§§INSTANCE-azizi_amp-db
 
       # Variables for the mapped database instance
-      - MAPPPED_DATABASE=§§MAPPPED_DATABASE
+      - MAPPED_DATABASE=§§MAPPED_DATABASE
       - MAPPED_USER=§§MAPPED_USER
       - MAPPED_PASSWORD=§§MAPPED_PASSWORD
       - MAPPED_HOST=§§MAPPED_HOST
