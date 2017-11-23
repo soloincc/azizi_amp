@@ -6,13 +6,14 @@ MAINTAINER Wangoru Kihara wangoru.kihara@badili.co.ke
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y
+    mysql-client \
+    libmysqlclient-dev \
 #     git \
 #     python \
 #     python-dev \
 #     python-setuptools \
 #     python-pip \
 #     nginx \
-#     libmysqlclient-dev
 
 # install uwsgi now because it takes a little while
 RUN pip install --upgrade pip && \
