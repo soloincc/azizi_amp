@@ -28,11 +28,13 @@ services:
     command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8089"
     networks:
       - bibbox-default-network
+    links:
+      - "§§INSTANCE-azizi-amp-db:azizi-amp-db"
     environment:
       - MYSQL_DATABASE=§§MYSQL_DATABASE
       - MYSQL_USER=§§MYSQL_USER
       - MYSQL_PASSWORD=§§MYSQL_PASSWORD
-      - MYSQL_HOST=§§INSTANCE-azizi-amp-db
+      - MYSQL_HOST=azizi-amp-db
       - MYSQL_PORT=3306
 
       # Variables for the mapped database instance

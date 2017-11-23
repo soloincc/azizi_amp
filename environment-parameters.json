@@ -57,7 +57,7 @@
       "id":"MAPPED_HOST",
       "display_name":"Mapped database host",
       "type":"text",
-      "default_value":"",
+      "default_value":"azizi-amp-db",
       "description":"Institute name in OpenSpecimen for the first user.",
       "min_length": "1",
       "max_length": "128"
