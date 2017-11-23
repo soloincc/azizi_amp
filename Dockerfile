@@ -5,9 +5,9 @@ MAINTAINER Wangoru Kihara wangoru.kihara@badili.co.ke
 # Install build deps, then run `pip install`, then remove unneeded build deps all in a single step. Correct the path to your production requirements file, if needed.
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y
+    apt-get install -y \
     mysql-client \
-    libmysqlclient-dev \
+    libmysqlclient-dev
 #     git \
 #     python \
 #     python-dev \
