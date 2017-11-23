@@ -1,7 +1,7 @@
 [
    {
       "id":"MYSQL_DATABASE",
-      "display_name":"OpenSpecimen Institute",
+      "display_name":"MySQL Database Name",
       "type":"text",
       "default_value":"",
       "description":"Institute name in OpenSpecimen for the first user.",
@@ -10,7 +10,7 @@
    },
    {
       "id":"MYSQL_USER",
-      "display_name":"databaseuser",
+      "display_name":"MySQL Database User",
       "type":"text",
       "default_value":"",
       "description":"Username for the database, leave empty for default (default:openspecimen)",
@@ -19,7 +19,7 @@
    },
    {
       "id":"MYSQL_PASSWORD",
-      "display_name":"databasepassword",
+      "display_name":"MySQL Database Password",
       "type":"PASSWORD",
       "default_value":"",
       "description":"Password for the database.",
@@ -28,7 +28,7 @@
    },
    {
       "id":"MAPPED_DATABASE",
-      "display_name":"OpenSpecimen Institute",
+      "display_name":"Mapped database name",
       "type":"text",
       "default_value":"",
       "description":"Institute name in OpenSpecimen for the first user.",
@@ -37,7 +37,7 @@
    },
    {
       "id":"MAPPED_USER",
-      "display_name":"databaseuser",
+      "display_name":"Mapped database user",
       "type":"text",
       "default_value":"",
       "description":"Username for the database, leave empty for default (default:openspecimen)",
@@ -46,7 +46,7 @@
    },
    {
       "id":"MAPPED_PASSWORD",
-      "display_name":"databasepassword",
+      "display_name":"Mapped database user password",
       "type":"PASSWORD",
       "default_value":"",
       "description":"Password for the database.",
@@ -55,7 +55,7 @@
    },
    {
       "id":"MAPPED_HOST",
-      "display_name":"OpenSpecimen Institute",
+      "display_name":"Mapped database host",
       "type":"text",
       "default_value":"",
       "description":"Institute name in OpenSpecimen for the first user.",
@@ -64,7 +64,7 @@
    },
    {
       "id":"MAPPED_PORT",
-      "display_name":"OpenSpecimen Institute",
+      "display_name":"Mapped database port",
       "type":"text",
       "default_value":"",
       "description":"Institute name in OpenSpecimen for the first user.",
@@ -73,7 +73,7 @@
    },
    {
       "id":"ONA_HOST",
-      "display_name":"OpenSpecimen Institute",
+      "display_name":"Ona server host",
       "type":"text",
       "default_value":"",
       "description":"Institute name in OpenSpecimen for the first user.",
@@ -82,7 +82,7 @@
    },
    {
       "id":"ONA_USER",
-      "display_name":"databaseuser",
+      "display_name":"Ona server username",
       "type":"text",
       "default_value":"",
       "description":"Username for the database, leave empty for default (default:openspecimen)",
@@ -91,7 +91,7 @@
    },
    {
       "id":"ONA_PASSWORD",
-      "display_name":"databasepassword",
+      "display_name":"Ona server user password",
       "type":"PASSWORD",
       "default_value":"",
       "description":"Password for the database.",
@@ -100,7 +100,7 @@
    },
    {
       "id":"ONA_API",
-      "display_name":"databaseuser",
+      "display_name":"Ona server user API token",
       "type":"text",
       "default_value":"",
       "description":"Username for the database, leave empty for default (default:openspecimen)",
