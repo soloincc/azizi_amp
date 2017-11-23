@@ -1,7 +1,6 @@
 {
   "makefolders":[
-    "var/lib/mysql",
-    "azizi_amp"
+    "var/lib/mysql"
   ],
   "copyfiles":[
     {
