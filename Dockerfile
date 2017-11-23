@@ -51,3 +51,8 @@ WORKDIR /opt/azizi_amp
 # Start uWSGI
 # CMD ["/venv/bin/uwsgi", "--http-auto-chunked", "--http-keepalive"]
 
+ADD scripts /opt/scripts
+WORKDIR /opt/scripts
+RUN chmod a+x *.sh
+
+ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
