@@ -25,7 +25,9 @@ services:
   §§INSTANCE-azizi-amp-web:
     image: soloincc/azizi_amp
     container_name: §§INSTANCE-azizi-amp-web
-    command: bash -c "python manage.py migrate --run-syncdb && python manage.py runserver 0.0.0.0:8089"
+    command: bash -c "python manage.py runserver 0.0.0.0:8089"
+    networks:
+      - bibbox-default-network
     environment:
       - MYSQL_DATABASE=§§MYSQL_DATABASE
       - MYSQL_USER=§§MYSQL_USER
