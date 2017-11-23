@@ -72,7 +72,8 @@ def under_review_page(request):
 
 def landing_page(request):
     get_or_create_csrf_token(request)
-    return render(request, 'landing_page.html')
+    # return render(request, 'landing_page.html')
+    return render(request, 'azizi_amp.html')
 
 
 # @login_required(login_url='/login')

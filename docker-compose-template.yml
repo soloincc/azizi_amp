@@ -19,12 +19,12 @@ services:
 
   §§INSTANCE-azizi_amp-web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8089
+    command: bash -c "python manage.py migrate --run-syncdb && python manage.py runserver 0.0.0.0:8089"
     environment:
-      - MYSQL_ROOT_PASSWORD=§§MYSQL_ROOT_PASSWORD
       - MYSQL_DATABASE=§§MYSQL_DATABASE
       - MYSQL_USER=§§MYSQL_USER
       - MYSQL_PASSWORD=§§MYSQL_PASSWORD
+      - MYSQL_HOST=§§INSTANCE-azizi_amp-db
 
       # Variables for the mapped database instance
       - MAPPPED_DATABASE=§§MAPPPED_DATABASE

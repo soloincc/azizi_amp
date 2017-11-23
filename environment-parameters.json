@@ -1,0 +1,92 @@
+[
+   {
+      "id":"MYSQL_DATABASE",
+      "display_name":"OpenSpecimen Institute",
+      "type":"text",
+      "default_value":"",
+      "description":"Institute name in OpenSpecimen for the first user.",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"MYSQL_USER",
+      "display_name":"databaseuser",
+      "type":"text",
+      "default_value":"",
+      "description":"Username for the database, leave empty for default (default:openspecimen)",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"MYSQL_PASSWORD",
+      "display_name":"databasepassword",
+      "type":"PASSWORD",
+      "default_value":"",
+      "description":"Password for the database.",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"MAPPED_DATABASE",
+      "display_name":"OpenSpecimen Institute",
+      "type":"text",
+      "default_value":"",
+      "description":"Institute name in OpenSpecimen for the first user.",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"MAPPED_USER",
+      "display_name":"databaseuser",
+      "type":"text",
+      "default_value":"",
+      "description":"Username for the database, leave empty for default (default:openspecimen)",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"MAPPED_PASSWORD",
+      "display_name":"databasepassword",
+      "type":"PASSWORD",
+      "default_value":"",
+      "description":"Password for the database.",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"ONA_HOST",
+      "display_name":"OpenSpecimen Institute",
+      "type":"text",
+      "default_value":"",
+      "description":"Institute name in OpenSpecimen for the first user.",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"ONA_USER",
+      "display_name":"databaseuser",
+      "type":"text",
+      "default_value":"",
+      "description":"Username for the database, leave empty for default (default:openspecimen)",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"ONA_PASSWORD",
+      "display_name":"databasepassword",
+      "type":"PASSWORD",
+      "default_value":"",
+      "description":"Password for the database.",
+      "min_length": "1",
+      "max_length": "128"
+   },
+   {
+      "id":"ONA_API",
+      "display_name":"databaseuser",
+      "type":"text",
+      "default_value":"",
+      "description":"Username for the database, leave empty for default (default:openspecimen)",
+      "min_length": "1",
+      "max_length": "128"
+   }
+]
