@@ -22,7 +22,7 @@ services:
       - §§INSTANCE-azizi-amp-data
 
   §§INSTANCE-azizi-amp-web:
-    build: .
+    image: soloincc/azizi_amp
     command: bash -c "python manage.py migrate --run-syncdb && python manage.py runserver 0.0.0.0:8089"
     environment:
       - MYSQL_DATABASE=§§MYSQL_DATABASE
