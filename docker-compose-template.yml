@@ -1,5 +1,10 @@
 version: '2'
 
+
+networks:
+    bibbox-default-network:
+      external: true
+
 services:
   §§INSTANCE-azizi_amp-db:
     container_name: §§INSTANCE-azizi_amp-db
