@@ -31,12 +31,14 @@ services:
       - MYSQL_USER=§§MYSQL_USER
       - MYSQL_PASSWORD=§§MYSQL_PASSWORD
       - MYSQL_HOST=§§INSTANCE-azizi-amp-db
+      - MYSQL_PORT=3306
 
       # Variables for the mapped database instance
       - MAPPED_DATABASE=§§MAPPED_DATABASE
       - MAPPED_USER=§§MAPPED_USER
       - MAPPED_PASSWORD=§§MAPPED_PASSWORD
       - MAPPED_HOST=§§MAPPED_HOST
+      - MAPPED_PORT=§§MAPPED_PORT
 
       # Variables for the Onadata server
       - ONA_HOST=§§ONA_HOST
