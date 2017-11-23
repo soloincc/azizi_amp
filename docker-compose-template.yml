@@ -44,7 +44,7 @@ services:
       - ONA_HOST=§§ONA_HOST
       - ONA_USER=§§ONA_USER
       - ONA_PASSWORD=§§ONA_PASSWORD
-      - ONA_API=§§ONA_API
+      - ONA_API_TOKEN=§§ONA_API
       
     ports:
       - "§§PORT:8089"
