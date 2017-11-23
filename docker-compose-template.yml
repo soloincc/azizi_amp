@@ -6,8 +6,8 @@ networks:
       external: true
 
 services:
-  §§INSTANCE-azizi_amp-db:
-    container_name: §§INSTANCE-azizi_amp-db
+  §§INSTANCE-azizi-amp-db:
+    container_name: §§INSTANCE-azizi-amp-db
     restart: unless-stopped
     networks:
       - bibbox-default-network
@@ -17,18 +17,18 @@ services:
       - MYSQL_USER=§§MYSQL_USER
       - MYSQL_PASSWORD=§§MYSQL_PASSWORD
     depends_on:
-      - §§INSTANCE-azizi_amp-data
+      - §§INSTANCE-azizi-amp-data
     volumes_from: 
-      - §§INSTANCE-azizi_amp-data
+      - §§INSTANCE-azizi-amp-data
 
-  §§INSTANCE-azizi_amp-web:
+  §§INSTANCE-azizi-amp-web:
     build: .
     command: bash -c "python manage.py migrate --run-syncdb && python manage.py runserver 0.0.0.0:8089"
     environment:
       - MYSQL_DATABASE=§§MYSQL_DATABASE
       - MYSQL_USER=§§MYSQL_USER
       - MYSQL_PASSWORD=§§MYSQL_PASSWORD
-      - MYSQL_HOST=§§INSTANCE-azizi_amp-db
+      - MYSQL_HOST=§§INSTANCE-azizi-amp-db
 
       # Variables for the mapped database instance
       - MAPPED_DATABASE=§§MAPPED_DATABASE
@@ -45,14 +45,14 @@ services:
     ports:
       - "§§PORT:8089"
     depends_on:
-      - §§INSTANCE-azizi_amp-db
-      - §§INSTANCE-azizi_amp-data
+      - §§INSTANCE-azizi-amp-db
+      - §§INSTANCE-azizi-amp-data
     volumes_from: 
-      - §§INSTANCE-azizi_amp-data
+      - §§INSTANCE-azizi-amp-data
 
-  §§INSTANCE-azizi_amp-data:
+  §§INSTANCE-azizi-amp-data:
     image: busybox
-    container_name: §§INSTANCE-azizi_amp-data
+    container_name: §§INSTANCE-azizi-amp-data
     volumes:
       - ./data/mysql:/var/lib/mysql
-      - ./opt/azizi_amp:/opt/azizi_amp
+      - ./azizi-amp:/opt/azizi-amp

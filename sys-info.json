@@ -1,4 +1,4 @@
 {
-  runningcontainers:["§§INSTANCE-azizi_amp-db", "§§INSTANCE-azizi_amp-db"],
+  runningcontainers:["§§INSTANCE-azizi-amp-db", "§§INSTANCE-azizi-amp-web"],
   supportcontainers:[]    
 }
