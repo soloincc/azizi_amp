@@ -7,7 +7,17 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
     mysql-client \
-    libmysqlclient-dev
+    libmysqlclient-dev \
+    git \
+    curl \
+    wget \
+    npm
+
+RUN ln -s /usr/bin/nodejs /usr/bin/node
+
+# install bower
+RUN npm install --global bower
+
 #     git \
 #     python \
 #     python-dev \
@@ -36,20 +46,7 @@ COPY . /opt/azizi_amp/
 
 WORKDIR /opt/azizi_amp
 
-# Manually start the server for now
-# CMD python manage.py runserver
-
-# Add any custom, static environment variables needed by Django or your settings file here:
-# ENV DJANGO_SETTINGS_MODULE=azizi_amp.settings
-
-# uWSGI configuration (customize as needed):
-# ENV UWSGI_VIRTUALENV=/venv UWSGI_WSGI_FILE=azizi_amp/uwsgi.ini UWSGI_HTTP=:8089 UWSGI_MASTER=1 UWSGI_WORKERS=2 UWSGI_THREADS=8 UWSGI_UID=1000 UWSGI_GID=2000 UWSGI_LAZY_APPS=1 UWSGI_WSGI_ENV_BEHAVIOR=holy
-
-# Call collectstatic (customize the following line with the minimal environment variables needed for manage.py to run):
-# RUN DATABASE_URL=none /venv/bin/python manage.py collectstatic --noinput
-
-# Start uWSGI
-# CMD ["/venv/bin/uwsgi", "--http-auto-chunked", "--http-keepalive"]
+RUN bower install
 
 ADD scripts /opt/scripts
 WORKDIR /opt/scripts
