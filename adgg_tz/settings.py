@@ -14,9 +14,14 @@ import os
 import json
 
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
-STATICFILES_DIRS = (
-    os.path.join(SITE_ROOT, '/www/adgg_v2/static/'),
-)
+if 'MYSQL_DATABASE' in os.environ:
+    STATICFILES_DIRS = (
+        os.path.join(SITE_ROOT, 'opt/azizi_amp/static/'),
+    )
+else:
+    STATICFILES_DIRS = (
+        os.path.join(SITE_ROOT, '/www/adgg_v2/static/'),
+    )
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -96,31 +101,61 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ['MYSQL_DATABASE'],
-        'USER': os.environ['MYSQL_USER'],
-        'PASSWORD': os.environ['MYSQL_PASSWORD'],
-        'HOST': os.environ['MYSQL_HOST'],
-        'PORT': os.environ['MYSQL_PORT']
-    },
-    'mapped': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ['MAPPED_DATABASE'],
-        'USER': os.environ['MAPPED_USER'],
-        'PASSWORD': os.environ['MAPPED_PASSWORD'],
-        'HOST': os.environ['MAPPED_HOST'],
-        'PORT': os.environ['MAPPED_PORT']
+# either use the environment variables or variables defined in a config file
+if 'MYSQL_DATABASE' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ['MYSQL_DATABASE'],
+            'USER': os.environ['MYSQL_USER'],
+            'PASSWORD': os.environ['MYSQL_PASSWORD'],
+            'HOST': os.environ['MYSQL_HOST'],
+            'PORT': os.environ['MYSQL_PORT']
+        },
+        'mapped': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ['MAPPED_DATABASE'],
+            'USER': os.environ['MAPPED_USER'],
+            'PASSWORD': os.environ['MAPPED_PASSWORD'],
+            'HOST': os.environ['MAPPED_HOST'],
+            'PORT': os.environ['MAPPED_PORT']
+        }
     }
-}
 
-ONADATA_SETTINGS = {
-    'HOST': os.environ['ONA_HOST'],
-    'USER': os.environ['ONA_USER'],
-    'PASSWORD': os.environ['ONA_PASSWORD'],
-    'API_TOKEN': os.environ['ONA_API_TOKEN']
-}
+    ONADATA_SETTINGS = {
+        'HOST': os.environ['ONA_HOST'],
+        'USER': os.environ['ONA_USER'],
+        'PASSWORD': os.environ['ONA_PASSWORD'],
+        'API_TOKEN': os.environ['ONA_API_TOKEN']
+    }
+else:
+    with open('adgg_tz/app_config.json') as config_file:
+        configs = json.load(config_file)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': configs['default']['db'],
+                'USER': configs['default']['user'],
+                'PASSWORD': configs['default']['passwd'],
+                'HOST': configs['default']['host'],
+                'PORT': configs['default']['port']
+            },
+            'mapped': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': configs['mapped']['db'],
+                'USER': configs['mapped']['user'],
+                'PASSWORD': configs['mapped']['passwd'],
+                'HOST': configs['mapped']['host'],
+                'PORT': configs['mapped']['port']
+            }
+        }
+
+        ONADATA_SETTINGS = {
+            'HOST': configs['onadata']['host'],
+            'USER': configs['onadata']['user'],
+            'PASSWORD': configs['onadata']['passwd'],
+            'API_TOKEN': configs['onadata']['api_token']
+        }
 
 CRONJOBS = [
     # ('*/5 * * * *', 'marsabit.odk_forms.auto_process_submissions', '>> /tmp/marsabit_cron.log')
