@@ -6,6 +6,10 @@
     {
       "source":".",
       "destination":"azizi_amp"
+    },
+    {
+      "source":"nginx.conf",
+      "destination":"nginx.conf"
     }
   ]
 }
