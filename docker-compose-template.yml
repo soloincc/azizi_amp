@@ -6,6 +6,21 @@ networks:
       external: true
 
 services:
+  §§INSTANCE-azizi-amp-nginx:
+    container_name: §§INSTANCE-azizi-amp-nginx
+    restart: unless-stopped
+    networks:
+      - bibbox-default-network
+    image: nginx
+    depends_on:
+      - §§INSTANCE-azizi-amp-data
+    volumes_from: 
+      - §§INSTANCE-azizi-amp-data
+    ports:
+      - "§§PORT:80"
+    links:
+      - "§§INSTANCE-azizi-amp-web:azizi-amp-web"
+
   §§INSTANCE-azizi-amp-db:
     container_name: §§INSTANCE-azizi-amp-db
     restart: unless-stopped
@@ -49,9 +64,7 @@ services:
       - ONA_USER=§§ONA_USER
       - ONA_PASSWORD=§§ONA_PASSWORD
       - ONA_API_TOKEN=§§ONA_API
-      
-    ports:
-      - "§§PORT:8089"
+
     depends_on:
       - §§INSTANCE-azizi-amp-db
       - §§INSTANCE-azizi-amp-data
@@ -64,3 +77,4 @@ services:
     volumes:
       - ./data/mysql:/var/lib/mysql
       - ./azizi-amp:/opt/azizi-amp
+      - ./nginx.conf:/etc/nginx/nginx.conf
