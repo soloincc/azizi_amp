@@ -16,7 +16,7 @@ import json
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 if 'MYSQL_DATABASE' in os.environ:
     STATICFILES_DIRS = (
-        os.path.join(SITE_ROOT, 'opt/azizi_amp/static/'),
+        os.path.join('/opt/azizi_amp/static/'),
     )
 else:
     STATICFILES_DIRS = (
