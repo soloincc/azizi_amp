@@ -46,7 +46,7 @@ COPY . /opt/azizi_amp/
 
 WORKDIR /opt/azizi_amp
 
-RUN bower install
+RUN bower install --allow-root
 
 ADD scripts /opt/scripts
 WORKDIR /opt/scripts
