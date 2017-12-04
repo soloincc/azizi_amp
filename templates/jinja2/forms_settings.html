@@ -16,6 +16,7 @@
                         <h5>Forms Settings</h5>
                     </div>
                     <div class="ibox-content">
+                        <table id="form_settings_table_1" class="table" data-paging="true" data-filtering="true" data-sorting="true" data-editing="true" data-state="true"></table>
                         <table id='form_settings_table' class='table'>
                             <thead>
                                 <th data-dynatable-column="id">ID</th>
@@ -24,8 +25,10 @@
                                 <th data-dynatable-column="full_form_id">Full Form ID</th>
                                 <th data-dynatable-column="auto_update">Auto Process</th>
                                 <th data-dynatable-column="is_source_deleted">Is Deleted</th>
+                                <th data-dynatable-column="actions">Actions</th>
                             </thead>
-                            <tbody></tbody>
+                            <tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -158,6 +161,8 @@
         </div>
     </div>
 
+    <script type='text/javascript' src="{{ static('bower/footables/compiled/footable.js') }}"></script>
+    
     <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcore.js') }}"></script>
     <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxnotification.js') }}"></script>
 
