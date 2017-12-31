@@ -21,7 +21,7 @@
                             <thead>
                                 <th data-dynatable-column="id">ID</th>
                                 <th data-dynatable-column="form_name">Form Name</th>
-                                <th data-dynatable-column="form_group">Form Group</th>
+                                <th data-dynatable-column="group_name">Form Group</th>
                                 <th data-dynatable-column="full_form_id">Full Form ID</th>
                                 <th data-dynatable-column="auto_update">Auto Process</th>
                                 <th data-dynatable-column="is_source_deleted">Is Deleted</th>
@@ -120,23 +120,20 @@
             
         </style>
         <div class="modal-dialog" role="document">
-            <form class="modal-content form-horizontal" id="mapping_editor">
+            <form class="modal-content form-horizontal" id="form_details_editor">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-                    <h4 class="modal-title" id="editor-title">Edit a Mapping</h4>
+                    <h4 class="modal-title" id="editor-title">Edit a Form</h4>
                 </div>
                 <div class="modal-body">
-                    <input type="number" id="form_id" name="mapping_id" class="hidden"/>
+                    <input type="number" name="form_id" class="hidden"/>
                     <div class="form-group">
                         <label for="form_name" class="col-sm-4 control-label">Form Name</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" id="form_name" name="form_name" placeholder="Form Name">
-                        </div>
+                        <div class="col-sm-8" id='form_name'>&nbsp; </div>
                     </div>
                     <div class="form-group">
                         <label for="form_group" class="col-sm-4 control-label">Form Group</label>
-                        <div class="col-sm-8" id='group_name'>
-                        </div>
+                        <div class="col-sm-8" id='form_group'><select id='group_name'></select></div>
                     </div>
                     <div class="form-group">
                         <label for="map_auto_process" class="col-sm-4 control-label">Auto Process</label>
@@ -148,13 +145,13 @@
                     <div class="form-group">
                         <label for="map_auto_process" class="col-sm-4 control-label">Is Source Deleted</label>
                         <div class="col-sm-8">
-                            <input type="radio" name="is_record_id" id="is_source_deleted_yes" value='yes'>Yes
-                            <input type="radio" name="is_record_id" id="is_source_deleted_no" value='no'>No
+                            <input type="radio" name="is_source_deleted" id="is_source_deleted_yes" value='yes'>Yes
+                            <input type="radio" name="is_source_deleted" id="is_source_deleted_no" value='no'>No
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <button type="submit" class="btn btn-primary" id='save_form_details'>Save changes</button>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 </div>
             </form>

@@ -141,6 +141,8 @@ function BadiliDash() {
     $('#confirm_process_submission').on('click', this.processCurSubmission);
     
     $(document).on('click', '.edit_record', this.viewRawSubmission);
+    $(document).on('click', '#form_settings_table .edit_form', this.editFormSettings);
+    $(document).on('click', '#save_form_details', this.saveFormSettings);
 }
 
 BadiliDash.prototype.initiate = function(){
@@ -1410,7 +1412,7 @@ BadiliDash.prototype.initiateFormSettingsPage = function(){
 };
 
 BadiliDash.prototype.refreshODKFormsTable = function(data){
-    // create the grid with the views data
+    // create the grid with the form details
     var $editor = $('#form-edit-modal');
     var ft;
     var columns = [
@@ -1462,6 +1464,73 @@ BadiliDash.prototype.refreshODKFormsTable = function(data){
         $('#test_mappings').removeClass('disabled');
         $('#clear_mappings').removeClass('disabled');
     }
+};
+
+BadiliDash.prototype.editFormSettings = function(){
+    var form_id = $(this).data('form_id');
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/fetch_form_details/", dataType: 'json', data: {'form_id': form_id},
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            if (data.error) {
+                dash.showNotification('There was an error while fetching form details.', 'error', true);
+            } else {
+                dash.populateFormDetails(data);
+            }
+        }
+    });
+};
+
+BadiliDash.prototype.populateFormDetails = function(data){
+    // create the select input item
+    var form_group_input = "<select name='group_name'><option value='-1'>Select One\n";
+    $.each(data.form_groups, function(){
+        is_selected = (this.id == data.form_details.form_group) ? ' selected ' : '';
+        form_group_input += "<option value='"+ this.id +"' "+ is_selected +"> "+ this.group_name +"\n";
+    });
+    form_group_input += "</select>"
+    $('#form_group').html(form_group_input);
+    $('[name=form_id]').val(data.form_details.form_id);
+    $('#form_name').html(data.form_details.form_name);
+
+    if(data.form_details.is_source_deleted == true){
+        $('#is_source_deleted_yes').prop('checked', 'checked');
+    }
+    else{
+        $('#is_source_deleted_no').prop('checked', 'checked');
+    }
+
+    if(data.form_details.auto_update == true){
+        $('#auto_update_yes').prop('checked', 'checked');
+    }
+    else{
+        $('#auto_update_no').prop('checked', 'checked');
+    }
+
+    $('#form-edit-modal').modal('show');
+};
+
+BadiliDash.prototype.saveFormSettings = function(event){
+    event.preventDefault();
+    // get all the settings
+    var form_details = $('#form_details_editor').serializeArray();
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/save_form_details/", dataType: 'json', data: form_details,
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            if (data.error) {
+                dash.showNotification('There was an error while saving the form details.', 'error', true);
+            } else {
+                dash.refreshODKFormsTable(data.form_settings);
+                dash.showNotification('The form details were saved successfully.', 'error', false);
+                $('#form-edit-modal').modal('hide');
+            }
+        }
+    });
 };
 
 var dash = new BadiliDash();

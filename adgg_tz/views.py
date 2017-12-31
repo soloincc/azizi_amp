@@ -512,6 +512,31 @@ def forms_settings_info(request):
     return response
 
 
+def fetch_form_details(request):
+    form_id = json.loads(request.POST['form_id'])
+    odk = OdkForms()
+    (is_error, cur_form) = odk.fetch_form_details(form_id)
+    (is_error1, all_groups) = odk.fetch_form_groups()
+
+    if is_error is True or is_error1 is True:
+        return return_json({'error': True, 'message': 'There was an error while fetching data from the database.'})
+
+    to_return = {'error': False, 'form_details': cur_form, 'form_groups': all_groups}
+    return return_json(to_return)
+
+
+def save_form_details(request):
+    odk = OdkForms()
+    (is_error, cur_form) = odk.save_form_details(request)
+
+    if is_error is True:
+        return return_json({'error': True, 'message': 'There was an error while fetching data from the database.'})
+
+    (is_success, form_settings) = odk.get_odk_forms_info(1, 10, 0, None, None)
+
+    return return_json({'error': False, 'form_settings': form_settings})
+
+
 def zip_response(json_data):
     gzip_buffer = IO()
     gzip_file = gzip.GzipFile(mode='wb', fileobj=gzip_buffer)
