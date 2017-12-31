@@ -2,131 +2,63 @@
 {% block dash_content %}
 
 <div>
-    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
     <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
 
 <div class="wrapper wrapper-content animated fadeInRight">
     <div class="row">
-        <div class="col-lg-4">
+        <div class="col-lg-6">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    <h5>ODK Server Settings</h5>
+                    <h5>System Settings</h5>
                 </div>
                 <div class="ibox-content">
                     <div class='row'>
                         <div class="col-sm-12 b-r">
-                            <form class="form-horizontal">
-                                <p>The ODK server settings for connecting to the server</p>
-                                <div class="form-group"><label class="col-lg-3 control-label">Host</label>
-                                    <div class="col-lg-9"><input type="url" placeholder="Server Host" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Username</label>
-                                    <div class="col-lg-9"><input type="text" placeholder="User" class="form-control"></div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Password</label>
-                                    <div class="col-lg-9"><input type="password" placeholder="Password" class="form-control"></div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Confirm</label>
-                                    <div class="col-lg-9"><input type="password" placeholder="Confirm Password" class="form-control"></div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">API Token</label>
-                                    <div class="col-lg-9"><input type="text" placeholder="API Token" class="form-control"></div>
-                                </div>
+                            <form class="form-horizontal cmxform" id='save_settings' action='/save_settings/' method='POST'>
+                                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                                 <div class="form-group">
-                                    <div class="col-lg-offset-2 col-lg-9">
-                                        <button class="btn btn-sm btn-primary pull-right m-t-n-xs" type="submit"><strong>Save</strong></button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="ibox float-e-margins">
-                <div class="ibox-title">
-                    <h5>Destination Database Settings (MySQL)</h5>
-                </div>
-                <div class="ibox-content">
-                    <div class='row'>
-                        <div class="col-sm-12 b-r">
-                            <form class="form-horizontal">
-                                <div class="form-group"><label class="col-lg-3 control-label">Host</label>
-                                    <div class="col-lg-9"><input type="url" placeholder="Server Host" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Database</label>
-                                    <div class="col-lg-9"><input type="text" placeholder="DB Name" class="form-control"></div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Username</label>
-                                    <div class="col-lg-9"><input type="text" placeholder="User" class="form-control"></div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Password</label>
-                                    <div class="col-lg-9"><input type="password" placeholder="Password" class="form-control"></div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Confirm</label>
-                                    <div class="col-lg-9"><input type="password" placeholder="Confirm Password" class="form-control"></div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Port</label>
-                                    <div class="col-lg-9"><input type="text" placeholder="Port" class="form-control"></div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="col-lg-offset-2 col-lg-9">
-                                        <button class="btn btn-sm btn-primary pull-right m-t-n-xs" type="submit"><strong>Save</strong></button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="ibox float-e-margins">
-                <div class="ibox-title">
-                    <h5>Other System Settings</h5>
-                </div>
-                <div class="ibox-content">
-                    <div class='row'>
-                        <div class="col-sm-12 b-r">
-                            <form class="form-horizontal">
-                                <div class="form-group">
-                                    <label class="col-lg-3 control-label">Default Language</label>
-                                    <div class="col-lg-9"><input type="email" placeholder="Default Locale" class="form-control"> 
-                                        <span class="help-block m-b-none">The default language to use in case of multiple languages in the form</span>
-                                    </div>
-                                </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Lookup Table Name</label>
+                                    <label for="system_name" class="col-lg-3 control-label">System Name *</label>
                                     <div class="col-lg-9">
-                                        <input type="text" placeholder="Lookup Table" class="form-control">
-                                        <span class="help-block m-b-none">The lookup table where the ODK data/options are saved</span>
+                                        <input type="text" placeholder="System Name" class="form-control" id='system_name' name="system_name" minlength="2" value="{{ settings['system_name'] or '' }}" required> 
+                                        <span class="help-block m-b-none">The name that you would like to give this instance</span>
                                     </div>
                                 </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Dry Ran Records</label>
+                                <div class="form-group"><label class="col-lg-3 control-label" for='no_dry_ran_rec'>Dry Ran Records *</label>
                                     <div class="col-lg-9">
-                                        <input type="text" placeholder="Dry Run Records" class="form-control">
+                                        <input type="text" placeholder="Dry Run Records" class="form-control" name='no_dry_ran_rec' required value="{{ settings['no_dry_ran_rec'] or '' }}">
                                         <span class="help-block m-b-none">The number of records to use when performing a dry run</span>
                                     </div>
                                 </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Joining String</label>
+                                <div class="form-group">
+                                    <label class="col-lg-3 control-label" for='default_locale'>Default Language</label>
                                     <div class="col-lg-9">
-                                        <input type="text" placeholder="Joiner" class="form-control">
+                                        <input type="text" placeholder="EN" class="form-control" name="default_locale" value="{{ settings['default_locale'] or '' }}">
+                                        <span class="help-block m-b-none">The default language to use in case of multiple languages in ODK</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label" for='lookup_table'>Lookup Table Name</label>
+                                    <div class="col-lg-9">
+                                        <input type="text" placeholder="Lookup Table" class="form-control" name="lookup_table" value="{{ settings['lookup_table'] or '' }}">
+                                        <span class="help-block m-b-none">The lookup table where the ODK data/options are saved</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label class="col-lg-3 control-label" for='joiner'>Joining String</label>
+                                    <div class="col-lg-9">
+                                        <input type="text" placeholder="Joiner" class="form-control" name='joiner' value="{{ settings['joiner'] or '' }}">
                                         <span class="help-block m-b-none">The string to use as a joiner when multiple data sources are defined for a single destination</span>
                                     </div>
                                 </div>
-                                <div class="form-group"><label class="col-lg-3 control-label">Sentry Error Logging</label>
+                                <div class="form-group"><label class="col-lg-3 control-label" for='sentry_api'>Sentry Error Logging</label>
                                     <div class="col-lg-9">
-                                        <input type="text" placeholder="Sentry URL" class="form-control">
+                                        <input type="text" placeholder="Sentry URL" class="form-control" name='sentry_api' value="{{ settings['sentry_api'] or '' }}">
                                         <span class="help-block m-b-none">The Sentry URL to use to log exceptions arising from the system</span>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-lg-offset-2 col-lg-9">
-                                        <button class="btn btn-sm btn-primary pull-right m-t-n-xs" type="submit"><strong>Save</strong></button>
+                                        <button class="btn btn-sm btn-primary pull-right m-t-n-xs" id='save_sys_settings'><strong>Save</strong></button>
                                     </div>
                                 </div>
                             </form>
@@ -135,8 +67,91 @@
                 </div>
             </div>
         </div>
+        <div class="col-lg-3">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>ONA Data Settings</h5>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal cmxform" id='ona_api' action='/save_ona_settings/' method='POST'>
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <div class="form-group"><label class="col-lg-3 control-label" for='ona_url'>URL</label>
+                            <div class="col-lg-9">
+                                <input type="text" placeholder="Ona URL" class="form-control" name='ona_url' value="{{ settings['ona_url'] or '' }}" required>
+                            </div>
+                        </div>
+                        <div class="form-group"><label class="col-lg-3 control-label" for='ona_user'>User</label>
+                            <div class="col-lg-9">
+                                <input type="text" placeholder="Ona User" class="form-control" name='ona_user' required value="{{ settings['ona_user'] or '' }}">
+                            </div>
+                        </div>
+                        <div class="form-group"><label class="col-lg-3 control-label" for='ona_password'>Password</label>
+                            <div class="col-lg-9">
+                                <input type="password" placeholder="Ona Password" class="form-control" name='ona_password' required value="{{ settings['ona_password'] or '' }}">
+                            </div>
+                        </div>
+                        <div class="form-group"><label class="col-lg-3 control-label" for='ona_api'>API Token</label>
+                            <div class="col-lg-9">
+                                <input type="text" placeholder="Ona API Token" class="form-control" name='ona_api_token' required value="{{ settings['ona_api_token'] or '' }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-lg-offset-2 col-lg-9">
+                                <button class="btn btn-sm btn-primary pull-right m-t-n-xs" id='save_ona_settings' type="submit"><strong>Save</strong></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Destination Database Settings (MySQL)</h5>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal cmxform" id='destination_db' action='/save_destination_db/' method='POST'>
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <div class="form-group"><label class="col-lg-3 control-label" for='host_name'>Host</label>
+                            <div class="col-lg-9">
+                                <input type="text" placeholder="Server Host" class="form-control" name='dest_db_host_name' required value="{{ settings['dest_db_host_name'] or 'azizi-amp-db' }}">
+                            </div>
+                        </div>
+                        <div class="form-group"><label class="col-lg-3 control-label" for='dest_db_name'>Database</label>
+                            <div class="col-lg-9">
+                                <input type="text" placeholder="DB Name" class="form-control" name='dest_db_name' required value="{{ settings['dest_db_name'] or 'axgg' }}">
+                            </div>
+                        </div>
+                        <div class="form-group"><label class="col-lg-3 control-label" for='dest_db_username'>Username</label>
+                            <div class="col-lg-9">
+                                <input type="text" placeholder="User" class="form-control" name='dest_db_username' required value="{{ settings['dest_db_username'] or 'root' }}">
+                            </div>
+                        </div>
+                        <div class="form-group"><label class="col-lg-3 control-label" for='dest_db_password'>Password</label>
+                            <div class="col-lg-9">
+                                <input type="password" placeholder="Password" class="form-control" name='dest_db_password' required value="{{ settings['dest_db_password'] or 'admin' }}">
+                            </div>
+                        </div>
+                        <div class="form-group"><label class="col-lg-3 control-label" for='dest_db_port'>Port</label>
+                            <div class="col-lg-9">
+                                <input type="text" placeholder="Port" class="form-control" name='dest_db_port' required value="{{ settings['dest_db_port'] or '3306' }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-lg-offset-2 col-lg-9">
+                                <button class="btn btn-sm btn-primary pull-right m-t-n-xs" id='save_db_settings' type="submit"><strong>Save</strong></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- jqxWidgets -->
+<script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcore.js') }}"></script>
+<script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxnotification.js') }}"></script>
 
 <script type='text/javascript' src="{{ static('plugins/metisMenu/jquery.metisMenu.js') }}"></script>
 <script type='text/javascript' src="{{ static('plugins/slimscroll/jquery.slimscroll.min.js') }}"></script>
@@ -147,13 +162,13 @@
 <!-- FooTable -->
 <script type='text/javascript' src="{{ static('bower/footables/compiled/footable.js') }}"></script>
 <script type="text/javascript" src="{{ static('bower/sweetalert/dist/sweetalert.min.js') }}"></script>
+<script type="text/javascript" src="{{ static('bower/jquery-validation/dist/jquery.validate.min.js') }}"></script>
+
 <script type='text/javascript' src="{{ static('js/adgg.js') }}"></script>
 
 <script>
     $(document).ready(function(){
         BadiliDash.data = {};
-
-        dash.data = {{ all_data | safe }};
     });
 </script>
 

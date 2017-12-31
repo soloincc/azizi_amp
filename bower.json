@@ -37,7 +37,8 @@
     "highcharts": "^6.0.3",
     "json-editor": "https://github.com/jdorn/json-editor.git",
     "bootstrap-table": "^1.11.1",
-    "dynatable": "https://github.com/alfajango/jquery-dynatable.git"
+    "dynatable": "https://github.com/alfajango/jquery-dynatable.git",
+    "jquery-validation": "^1.17.0"
   },
   "private": true
 }

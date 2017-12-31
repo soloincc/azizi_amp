@@ -1,5 +1,5 @@
 from django.db import connections
-from terminal_output import Terminal
+from vendor.terminal_output import Terminal
 from settings import DATABASES
 
 terminal = Terminal()

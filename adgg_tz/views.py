@@ -20,9 +20,9 @@ from django.middleware import csrf
 
 from wsgiref.util import FileWrapper
 
-from .odk_forms import OdkForms
+from vendor.odk_parser import OdkParser
 from .adgg import ADGG
-from .terminal_output import Terminal
+from vendor.terminal_output import Terminal
 
 import os
 terminal = Terminal()
@@ -81,8 +81,13 @@ def download_page(request):
     csrf_token = get_or_create_csrf_token(request)
 
     # get all the data to be used to construct the tree
-    odk = OdkForms()
-    all_forms = odk.get_all_forms()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
+    all_forms = parser.get_all_forms()
     page_settings = {
         'page_title': "%s | Downloads" % settings.SITE_NAME,
         'csrf_token': csrf_token,
@@ -95,11 +100,16 @@ def download_page(request):
 # @login_required(login_url='/login')
 def modify_view(request):
 
-    odk = OdkForms()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
     if (request.get_full_path() == '/edit_view/'):
-        response = odk.edit_view(request)
+        response = parser.edit_view(request)
     elif (request.get_full_path() == '/delete_view/'):
-        response = odk.delete_view(request)
+        response = parser.delete_view(request)
 
     return HttpResponse(json.dumps(response))
 
@@ -109,8 +119,13 @@ def manage_views(request):
     csrf_token = get_or_create_csrf_token(request)
 
     # get all the data to be used to construct the tree
-    odk = OdkForms()
-    all_data = odk.get_views_info()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
+    all_data = parser.get_views_info()
 
     page_settings = {
         'page_title': "%s | Manage Generated Views" % settings.SITE_NAME,
@@ -123,10 +138,15 @@ def manage_views(request):
 
 # @login_required(login_url='/login')
 def update_db(request):
-    odk = OdkForms()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
 
     try:
-        odk.update_sdss_db()
+        parser.update_sdss_db()
     except Exception as e:
         logging.error(traceback.format_exc())
         print str(e)
@@ -172,10 +192,15 @@ def show_dashboard(request):
 # @login_required(login_url='/login')
 def form_structure(request):
     # given a form id, get the structure for the form
-    odk = OdkForms()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
     try:
         form_id = int(request.POST['form_id'])
-        structure = odk.get_form_structure_as_json(form_id)
+        structure = parser.get_form_structure_as_json(form_id)
     except KeyError as e:
         logging.error(traceback.format_exc())
         return HttpResponse(json.dumps({'error': True, 'message': str(e)}))
@@ -190,10 +215,15 @@ def form_structure(request):
 # @login_required(login_url='/login')
 def download_data(request):
     # given the nodes, download the associated data
-    odk = OdkForms()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
     try:
         data = json.loads(request.body)
-        res = odk.fetch_merge_data(data['form_id'], data['nodes[]'], data['format'], data['action'], data['view_name'])
+        res = parser.fetch_merge_data(data['form_id'], data['nodes[]'], data['format'], data['action'], data['view_name'])
     except KeyError as e:
         response = HttpResponse(json.dumps({'error': True, 'message': str(e)}), content_type='text/json')
         response['Content-Message'] = json.dumps({'error': True, 'message': str(e)})
@@ -222,10 +252,15 @@ def download_data(request):
 # @login_required(login_url='/login')
 def download(request):
     # given the nodes, download the associated data
-    odk = OdkForms()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
     try:
         data = json.loads(request.body)
-        filename = odk.fetch_data(data['form_id'], data['nodes[]'], data['format'])
+        filename = parser.fetch_data(data['form_id'], data['nodes[]'], data['format'])
     except KeyError:
         return HttpResponse(traceback.format_exc())
     except Exception as e:
@@ -245,10 +280,15 @@ def refresh_forms(request):
     """
     Refresh the database with any new forms
     """
-    odk = OdkForms()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
 
     try:
-        all_forms = odk.refresh_forms()
+        all_forms = parser.refresh_forms()
     except Exception:
         logging.error(traceback.format_exc())
 
@@ -290,10 +330,15 @@ def serve_static_files(request, path, insecure=False, **kwargs):
 def manage_mappings(request):
     csrf_token = get_or_create_csrf_token(request)
 
-    odk = OdkForms()
-    all_forms = odk.get_all_forms()
-    (db_tables, tables_columns) = odk.get_db_tables()
-    mappings = odk.mapping_info()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
+    all_forms = parser.get_all_forms()
+    (db_tables, tables_columns) = parser.get_db_tables()
+    mappings = parser.mapping_info()
 
     page_settings = {
         'page_title': "%s | Home" % settings.SITE_NAME,
@@ -308,28 +353,28 @@ def manage_mappings(request):
 
 
 def edit_mapping(request):
-    odk = OdkForms()
+    parser = OdkParser()
     if (request.get_full_path() == '/edit_mapping/'):
-        response = odk.edit_mapping(request)
+        response = parser.edit_mapping(request)
 
     return HttpResponse(json.dumps(response))
 
 
 def create_mapping(request):
-    odk = OdkForms()
-    mappings = odk.save_mapping(request)
+    parser = OdkParser()
+    mappings = parser.save_mapping(request)
     return return_json(mappings)
 
 
 def delete_mapping(request):
-    odk = OdkForms()
-    mappings = odk.delete_mapping(request)
+    parser = OdkParser()
+    mappings = parser.delete_mapping(request)
     return return_json(mappings)
 
 
 def clear_mappings(request):
-    odk = OdkForms()
-    mappings = odk.clear_mappings()
+    parser = OdkParser()
+    mappings = parser.clear_mappings()
     return return_json(mappings)
 
 
@@ -349,31 +394,37 @@ def return_polygons(mappings):
 
 
 def validate_mappings(request):
-    odk = OdkForms()
-    (is_fully_mapped, is_mapping_valid, comments) = odk.validate_mappings()
+    parser = OdkParser()
+    (is_fully_mapped, is_mapping_valid, comments) = parser.validate_mappings()
 
     to_return = {'error': False, 'is_fully_mapped': is_fully_mapped, 'is_mapping_valid': is_mapping_valid, 'comments': comments}
     return return_json(to_return)
 
 
 def manual_data_process(request):
-    odk = OdkForms()
+    parser = OdkParser()
     is_dry_run = json.loads(request.POST['is_dry_run'])
-    (is_success, comments) = odk.manual_process_data(is_dry_run)
+    (is_success, comments) = parser.manual_process_data(is_dry_run)
 
     to_return = {'error': is_success, 'comments': comments}
     return return_json(to_return)
 
 
 def delete_processed_data(request):
-    odk = OdkForms()
-    (is_success, comments) = odk.delete_processed_data()
+    parser = OdkParser()
+    (is_success, comments) = parser.delete_processed_data()
 
     to_return = {'error': is_success, 'comments': comments}
     return return_json(to_return)
 
 
 def processing_errors(request):
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
     csrf_token = get_or_create_csrf_token(request)
     page_settings = {
         'page_title': "%s | Processing Errors" % settings.SITE_NAME,
@@ -390,8 +441,8 @@ def fetch_processing_errors(request):
     sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
     queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
 
-    odk = OdkForms()
-    (is_success, proc_errors) = odk.processing_errors(cur_page, per_page, offset, sorts, queries)
+    parser = OdkParser()
+    (is_success, proc_errors) = parser.processing_errors(cur_page, per_page, offset, sorts, queries)
     to_return = json.dumps(proc_errors)
 
     response = HttpResponse(to_return, content_type='text/json')
@@ -401,8 +452,8 @@ def fetch_processing_errors(request):
 
 def fetch_single_error(request):
     err_id = json.loads(request.POST['err_id'])
-    odk = OdkForms()
-    (is_success, cur_error, r_sub) = odk.fetch_single_error(err_id)
+    parser = OdkParser()
+    (is_success, cur_error, r_sub) = parser.fetch_single_error(err_id)
 
     to_return = {'error': is_success, 'err_json': cur_error, 'raw_submission': r_sub}
     return return_json(to_return)
@@ -410,8 +461,13 @@ def fetch_single_error(request):
 
 def map_visualization(request):
     csrf_token = get_or_create_csrf_token(request)
-    odk = OdkForms()
-    map_settings = odk.fetch_base_map_settings()
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
+    map_settings = parser.fetch_base_map_settings()
     page_settings = {
         'page_title': "%s | Map Based Visualizations" % settings.SITE_NAME,
         'csrf_token': csrf_token,
@@ -423,17 +479,17 @@ def map_visualization(request):
 
 
 def first_level_geojson(request):
-    odk = OdkForms()
+    parser = OdkParser()
     c_code = json.loads(request.GET['c_code'])
-    cur_polygons = odk.first_level_geojson(int(c_code))
+    cur_polygons = parser.first_level_geojson(int(c_code))
 
     return HttpResponse(json.dumps(cur_polygons), content_type='application/json')
 
 
 def save_json_edits(request):
     err_id = json.loads(request.POST['err_id'])
-    odk = OdkForms()
-    (is_error, cur_error) = odk.save_json_edits(err_id, json.loads(request.POST['json_data']))
+    parser = OdkParser()
+    (is_error, cur_error) = parser.save_json_edits(err_id, json.loads(request.POST['json_data']))
 
     to_return = {'error': is_error, 'message': cur_error}
     return return_json(to_return)
@@ -441,14 +497,20 @@ def save_json_edits(request):
 
 def process_single_submission(request):
     err_id = json.loads(request.POST['err_id'])
-    odk = OdkForms()
-    (is_error, cur_error) = odk.process_single_submission(err_id)
+    parser = OdkParser()
+    (is_error, cur_error) = parser.process_single_submission(err_id)
 
     to_return = {'error': is_error, 'message': cur_error}
     return return_json(to_return)
 
 
 def processing_status(request):
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
     csrf_token = get_or_create_csrf_token(request)
     page_settings = {
         'page_title': "%s | Processing Status" % settings.SITE_NAME,
@@ -465,8 +527,8 @@ def fetch_processing_status(request):
     sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
     queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
 
-    odk = OdkForms()
-    (is_success, proc_errors) = odk.fetch_processing_status(cur_page, per_page, offset, sorts, queries)
+    parser = OdkParser()
+    (is_success, proc_errors) = parser.fetch_processing_status(cur_page, per_page, offset, sorts, queries)
     to_return = json.dumps(proc_errors)
 
     response = HttpResponse(to_return, content_type='text/json')
@@ -477,15 +539,36 @@ def fetch_processing_status(request):
 def system_settings(request):
     csrf_token = get_or_create_csrf_token(request)
 
+    parser = OdkParser()
+    all_settings = parser.get_all_settings()
+
     page_settings = {
         'page_title': "%s | Home" % settings.SITE_NAME,
         'csrf_token': csrf_token,
+        'settings': all_settings,
         'section_title': 'Manage %s Settings' % settings.SITE_NAME
     }
     return render(request, 'system_settings.html', page_settings)
 
 
+
+def save_settings(request):
+    # saves the settings as pased from the front end
+    csrf_token = get_or_create_csrf_token(request)
+
+    parser = OdkParser()
+    result = parser.save_settings(request)
+
+    return return_json(result)
+
+
 def forms_settings(request):
+    parser = OdkParser()
+    is_first_login = parser.is_first_login()
+    are_ona_settings_saved = parser.are_ona_settings_saved()
+    if is_first_login is True or are_ona_settings_saved is False:
+        return system_settings(request)
+
     csrf_token = get_or_create_csrf_token(request)
 
     page_settings = {
@@ -503,8 +586,8 @@ def forms_settings_info(request):
     sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
     queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
 
-    odk = OdkForms()
-    (is_success, proc_errors) = odk.get_odk_forms_info(cur_page, per_page, offset, sorts, queries)
+    parser = OdkParser()
+    (is_success, proc_errors) = parser.get_odk_forms_info(cur_page, per_page, offset, sorts, queries)
     to_return = json.dumps(proc_errors)
 
     response = HttpResponse(to_return, content_type='text/json')
@@ -514,9 +597,9 @@ def forms_settings_info(request):
 
 def fetch_form_details(request):
     form_id = json.loads(request.POST['form_id'])
-    odk = OdkForms()
-    (is_error, cur_form) = odk.fetch_form_details(form_id)
-    (is_error1, all_groups) = odk.fetch_form_groups()
+    parser = OdkParser()
+    (is_error, cur_form) = parser.fetch_form_details(form_id)
+    (is_error1, all_groups) = parser.fetch_form_groups()
 
     if is_error is True or is_error1 is True:
         return return_json({'error': True, 'message': 'There was an error while fetching data from the database.'})
@@ -526,13 +609,13 @@ def fetch_form_details(request):
 
 
 def save_form_details(request):
-    odk = OdkForms()
-    (is_error, cur_form) = odk.save_form_details(request)
+    parser = OdkParser()
+    (is_error, cur_form) = parser.save_form_details(request)
 
     if is_error is True:
         return return_json({'error': True, 'message': 'There was an error while fetching data from the database.'})
 
-    (is_success, form_settings) = odk.get_odk_forms_info(1, 10, 0, None, None)
+    (is_success, form_settings) = parser.get_odk_forms_info(1, 10, 0, None, None)
 
     return return_json({'error': False, 'form_settings': form_settings})
 

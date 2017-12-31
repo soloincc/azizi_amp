@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'livereload',
     'raven.contrib.django.raven_compat',
 
-    'adgg_tz'
+    'adgg_tz',
+    'vendor'
 ]
 
 MIDDLEWARE = [
@@ -63,7 +64,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'livereload.middleware.LiveReloadScript',
 ]
 
 ROOT_URLCONF = 'adgg_tz.urls'
