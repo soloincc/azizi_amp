@@ -139,6 +139,7 @@ function BadiliDash() {
     $('#confirm_delete_data').on('click', this.clearProcessedData);
     $('#confirm_save_edits').on('click', this.saveEditedJson);
     $('#confirm_process_submission').on('click', this.processCurSubmission);
+    $('#save_sys_settings, #save_db_settings, #save_ona_settings').on('click', this.saveSystemSettings);
     
     $(document).on('click', '.edit_record', this.viewRawSubmission);
     $(document).on('click', '#form_settings_table .edit_form', this.editFormSettings);
@@ -1528,6 +1529,49 @@ BadiliDash.prototype.saveFormSettings = function(event){
                 dash.refreshODKFormsTable(data.form_settings);
                 dash.showNotification('The form details were saved successfully.', 'error', false);
                 $('#form-edit-modal').modal('hide');
+            }
+        }
+    });
+};
+
+BadiliDash.prototype.saveSystemSettings = function(event){
+    if(this.id == 'save_sys_settings'){
+        var cur_form_id = 'save_settings';
+        $("#"+cur_form_id).validate({
+            rules: {
+                no_dry_ran_rec: {
+                    required: true,
+                    digits: true
+                }
+            }
+        });
+    }
+    else if(this.id == 'save_db_settings'){
+        var cur_form_id = 'destination_db';
+        $("#"+cur_form_id).validate();
+    }
+    else if(this.id == 'save_ona_settings'){
+        var cur_form_id = 'ona_api';
+        $("#"+cur_form_id).validate();
+    }
+    var entered_data = $('#'+cur_form_id).serializeArray();
+    
+    if($("#"+cur_form_id).valid() == false){
+        return;
+    }
+
+    event.preventDefault();
+    // {'err_id': dash.cur_error_id, 'json_data': JSON.stringify(edited_json)
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/save_settings/", dataType: 'json', data: entered_data,
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            if (data.error) {
+                dash.showNotification('There was an error while saving the edits. Please contact the system administrator!', 'error', true);
+            } else {
+                dash.showNotification('The edits were saved successfully!', 'success', true);
             }
         }
     });
