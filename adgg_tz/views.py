@@ -551,7 +551,6 @@ def system_settings(request):
     return render(request, 'system_settings.html', page_settings)
 
 
-
 def save_settings(request):
     # saves the settings as pased from the front end
     csrf_token = get_or_create_csrf_token(request)
@@ -618,6 +617,34 @@ def save_form_details(request):
     (is_success, form_settings) = parser.get_odk_forms_info(1, 10, 0, None, None)
 
     return return_json({'error': False, 'form_settings': form_settings})
+
+
+def form_groups_info(request):
+    cur_page = json.loads(request.GET['page'])
+    per_page = json.loads(request.GET['perPage'])
+    offset = json.loads(request.GET['offset'])
+    sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
+    queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
+
+    parser = OdkParser()
+    (is_success, proc_errors) = parser.get_form_groups_info(cur_page, per_page, offset, sorts, queries)
+    to_return = json.dumps(proc_errors)
+
+    response = HttpResponse(to_return, content_type='text/json')
+    response['Content-Message'] = to_return
+    return response
+
+
+def save_group_details(request):
+    parser = OdkParser()
+    (is_error, cur_group) = parser.save_group_details(request)
+
+    if is_error is True:
+        return return_json({'error': True, 'message': 'There was an error while fetching data from the database.'})
+
+    (is_success, group_settings) = parser.get_form_groups_info(1, 10, 0, None, None)
+
+    return return_json({'error': False, 'group_settings': group_settings})
 
 
 def zip_response(json_data):

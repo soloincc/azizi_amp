@@ -140,10 +140,15 @@ function BadiliDash() {
     $('#confirm_save_edits').on('click', this.saveEditedJson);
     $('#confirm_process_submission').on('click', this.processCurSubmission);
     $('#save_sys_settings, #save_db_settings, #save_ona_settings').on('click', this.saveSystemSettings);
+    $('#new_form_group').on('click', function(){
+        $('#form-group-modal').modal('show');
+    });
+
     
     $(document).on('click', '.edit_record', this.viewRawSubmission);
     $(document).on('click', '#form_settings_table .edit_form', this.editFormSettings);
     $(document).on('click', '#save_form_details', this.saveFormSettings);
+    $(document).on('click', '#save_group_details', this.saveGroupDetails);
 }
 
 BadiliDash.prototype.initiate = function(){
@@ -1576,5 +1581,59 @@ BadiliDash.prototype.saveSystemSettings = function(event){
         }
     });
 };
+
+BadiliDash.prototype.initiateFormGroupsSettings = function(){
+    dash.error_table = $('#form_groups_table').dynatable({
+      dataset: {
+        paginate: true,
+        recordCount: true,
+        sorting: true,
+        ajax: true,
+        ajaxUrl: '/form_groups_info/',
+        ajaxOnLoad: true,
+        records: []
+      },
+      features: {
+        search: false
+      }
+    });
+};
+
+BadiliDash.prototype.saveGroupDetails = function(){
+    $("#form_group_editor").validate({
+        rules: {
+            group_name: {
+                required: true
+            },
+            group_index: {
+                required: true,
+                digits: true
+            }
+        }
+    });
+    if($("#form_group_editor").valid() == false){
+        return;
+    }
+    event.preventDefault();
+    // get all the settings
+    var group_details = $('#form_group_editor').serializeArray();
+    $('#spinnermModal').modal('show');
+    $.ajax({
+        type: "POST", url: "/save_group_details/", dataType: 'json', data: group_details,
+        error: dash.communicationError,
+        success: function (data) {
+            $('#spinnermModal').modal('hide');
+            if (data.error) {
+                dash.showNotification('There was an error while saving the group details.', 'error', true);
+            } else {
+                dash.refreshFormGroupsTable(data.group_settings);
+                dash.showNotification('The group details were saved successfully.', 'error', false);
+                $('#form-group-modal').modal('hide');
+            }
+        }
+    });
+};
+
+BadiliDash.prototype.refreshFormGroupsTable = function(){};
 
 var dash = new BadiliDash();

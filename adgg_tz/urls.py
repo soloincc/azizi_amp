@@ -61,4 +61,6 @@ urlpatterns = [
     url(r'^forms_settings_info/$', views.forms_settings_info, name='forms_settings_infoinfo'),
     url(r'^fetch_form_details/$', views.fetch_form_details, name='fetch_form_details'),
     url(r'^save_form_details/$', views.save_form_details, name='save_form_details'),
+    url(r'^form_groups_info/$', views.form_groups_info, name='form_groups_info'),
+    url(r'^save_group_details/$', views.save_group_details, name='save_group_details'),
 ]
