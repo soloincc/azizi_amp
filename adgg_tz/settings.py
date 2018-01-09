@@ -72,9 +72,9 @@ ROOT_URLCONF = 'adgg_tz.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'DIRS': [os.path.join(BASE_DIR, 'templates/jinja2')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates/jinja2'), os.path.join(BASE_DIR, 'odk_dashboard/templates/jinja2')],
         'APP_DIRS': True,
-        'OPTIONS': {'environment': 'adgg_tz.jinja2_settings.environment',},
+        'OPTIONS': {'environment': 'adgg_tz.jinja2_settings.environment', },
     },
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
