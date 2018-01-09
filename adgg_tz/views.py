@@ -144,7 +144,6 @@ def update_db(request):
     if is_first_login is True or are_ona_settings_saved is False:
         return system_settings(request)
 
-
     try:
         parser.update_sdss_db()
     except Exception as e:

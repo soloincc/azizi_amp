@@ -1,4 +1,0 @@
-Documentation
-
-When the Data Dry Run returns an error "Error: Expecting that the table 'instance_meta' is already processed and the generated foreign key saved. I didn't find it. Can't proceed" it means that the tables are not properly linked. A foreign key join is missing
-
