@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'raven.contrib.django.raven_compat',
 
     'adgg_tz',
-    'vendor'
+    'vendor',
+    'odk_dashboard'
 ]
 
 MIDDLEWARE = [
