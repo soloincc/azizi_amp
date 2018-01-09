@@ -17,7 +17,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpRequest
 from raven import Client
 
-from models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLookup, DictionaryItems, FormMappings, ProcessingErrors, ODKFormGroup
+from vendor.models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLookup, DictionaryItems, FormMappings, ProcessingErrors, ODKFormGroup
 
 from sql import Query
 from vendor.terminal_output import Terminal
