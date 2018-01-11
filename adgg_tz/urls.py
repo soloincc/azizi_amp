@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'static/(?P<path>.*)$', views.serve_static_files),
     url(r'^farmers$', views.farmers, name='farmers'),
+    url(r'^fetch_farmers_list', views.fetch_farmers_list, name='fetch_farmers_list'),
 ]

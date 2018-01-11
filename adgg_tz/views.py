@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.contrib.auth.decorators import login_required
 from django.views import static
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.middleware import csrf
 
@@ -105,3 +106,26 @@ def farmers(request):
     except Exception as e:
         terminal.tprint('Error! %s' % str(e), 'fail')
         show_landing(request)
+
+
+@login_required(login_url='/login')
+def fetch_farmers_list(request):
+    get_or_create_csrf_token(request)
+
+    cur_page = json.loads(request.GET['page'])
+    per_page = json.loads(request.GET['perPage'])
+    offset = json.loads(request.GET['offset'])
+    sorts = json.loads(request.GET['sorts']) if 'sorts' in request.GET else None
+    queries = json.loads(request.GET['queries']) if 'queries' in request.GET else None
+
+    adgg = ADGG()
+    try:
+        (is_success, farmers) = adgg.fetch_farmers_list(cur_page, per_page, offset, sorts, queries)
+        to_return = json.dumps(farmers)
+    except Exception as e:
+        terminal.tprint(str(e), 'fail')
+        to_return = {'error': True, 'message': str(e)}
+
+    response = HttpResponse(to_return, content_type='text/json')
+    response['Content-Message'] = to_return
+    return response

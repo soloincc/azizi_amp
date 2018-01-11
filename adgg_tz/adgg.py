@@ -167,3 +167,42 @@ class ADGG():
             stats['animals']['count'] = animals[0]
 
         return stats
+
+    def fetch_farmers_list(self, cur_page, per_page, offset, sorts, queries):
+        all_errors = ProcessingErrors.objects.all().order_by('-id')
+        p = Paginator(all_errors, per_page)
+        p_errors = p.page(cur_page)
+        if sorts is not None:
+            print sorts
+
+        to_return = []
+        with connections['mapped'].cursor() as cursor:
+            # get the number of processed farmers
+            farmers_q = """
+                SELECT a.id, a.hh_id as farmer_id, a.active as is_active, b.latitude, b.longitude, b.date_submitted as date_joined
+                FROM households as a INNER JOIN instance_meta as b on a.instance_meta_id=b.id
+                """
+            cursor.execute(farmers_q)
+            farmers = cursor.fetchall()
+            if farmers is None:
+                raise AssertionError('There was some error while fetching data from the database')
+
+            for farmer in farmers:
+                # get the number of processed animals
+                animals_q = "SELECT count(*) as count from animals where hh_id = %d" % farmer[0]
+                cursor.execute(animals_q)
+                animals = cursor.fetchone()
+                if animals is None:
+                    raise AssertionError('There was some error while fetching data from the database')
+
+                cur_farmer = defaultdict(dict)
+                cur_farmer['id'] = farmer[0]
+                cur_farmer['farmer_id'] = farmer[1]
+                # cur_farmer['date_joined'] = farmer[5]
+                cur_farmer['is_active'] = 'Yes' if farmer[2] == 1 else 'No'
+
+                cur_farmer['no_animals'] = animals[0]
+                cur_farmer['actions'] = '<button type="button" data-identifier="%s" class="edit_record btn btn-sm btn-outline btn-warning">View</button>' % farmer[0]
+                to_return.append(cur_farmer)
+
+        return False, {'records': to_return, "queryRecordCount": p.count, "totalRecordCount": p.count}
