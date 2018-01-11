@@ -85,3 +85,23 @@ def get_or_create_csrf_token(request):
         request.META['CSRF_COOKIE'] = token
     request.META['CSRF_COOKIE_USED'] = True
     return token
+
+
+@login_required(login_url='/login')
+def farmers(request):
+    csrf_token = get_or_create_csrf_token(request)
+
+    adgg = ADGG()
+    try:
+        stats = adgg.system_stats()
+        page_settings = {
+            'page_title': "%s | Home" % settings.SITE_NAME,
+            'csrf_token': csrf_token,
+            'section_title': 'ADGG Recruited Farmers',
+            'data': stats,
+            'js_data': json.dumps(stats)
+        }
+        return render(request, 'farmers.html', page_settings)
+    except Exception as e:
+        terminal.tprint('Error! %s' % str(e), 'fail')
+        show_landing(request)

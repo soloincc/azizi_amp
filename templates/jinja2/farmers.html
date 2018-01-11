@@ -1,0 +1,165 @@
+{% extends "base_dashboard.html" %}
+{% block dash_content %}
+
+<div>
+    <link rel="stylesheet" href="{{ static('bower/jqwidgets/jqwidgets/styles/jqx.base.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/dynatable/jquery.dynatable.css') }}" />
+    <link rel="stylesheet" href="{{ static('bower/footables/compiled/footable.bootstrap.css') }}" />
+    
+    <link rel="stylesheet" href="{{ static('css/dm_dashboard.css') }}" />
+
+    <div class="wrapper wrapper-content animated fadeInRight">
+        <div class='row'>
+            <div class='col-lg-12' id='error_table'>
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>Processing Errors</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <table id='processing_errors' class='table'>
+                          <thead>
+                            <th data-dynatable-column="id">ID</th>
+                            <th data-dynatable-column="err_code">Error Code</th>
+                            <th data-dynatable-column="data_uuid">UUID</th>
+                            <th data-dynatable-column="err_message">Error Message</th>
+                            <th data-dynatable-column="actions">Actions</th>
+                          </thead>
+                          <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row processing_comments hidden">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-warning pull-right">Full error details</span>
+                        <h5>Error Additional Info</h5>
+                    </div>
+                    <div class="ibox-content" id='error_information'>
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <small class="stats-label">Is Resolved</small>
+                                <h4 id='is_resolved'><button type="button" class="btn btn-danger btn-sm">No</button></h4>
+                            </div>
+
+                            <div class="col-xs-2">
+                                <small class="stats-label">Error ID</small>
+                                <h4 id='error_id'>46.11%</h4>
+                            </div>
+                            <div class="col-xs-2">
+                                <small class="stats-label">Error Code</small>
+                                <h4 id='error_code'>432.021</h4>
+                            </div>
+                            <div class="col-xs-2">
+                                <small class="stats-label">UUID</small>
+                                <h4 class='uuid'>643 321.10</h4>
+                            </div>
+
+                            <div class="col-xs-2">
+                                <small class="stats-label">Submission Time</small>
+                                <h4 id='subm_time'>92.43%</h4>
+                            </div>
+                            <div class="col-xs-2">
+                                <small class="stats-label">Last week</small>
+                                <h4 id=''>564.554</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <span class="badge badge-success">Data UUID</span>
+                                    <span class='uuid'>But who has any right</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="badge badge-warning">Comments</span>
+                                    <span id='err_comments' class='text-warning'>But I must explain to</span>
+                                </li>
+                                <li class="list-group-item ">
+                                    <span class="badge badge-danger">Message</span>
+                                    <span id='err_message' class='text-danger'>How all this mistaken</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="badge badge-plain">Other</span>
+                                    <span id='add_comments'>But because occasionally</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row json_editor hidden">
+            <div class="col-lg-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>Data JSON Editor</h5>
+                        <div class='row table_actions ibox-tools'>
+                            <button class="alert alert-success" id='valid_indicator'>JSON Data is Valid</button>
+                            <button type="button" class="btn btn-outline btn-primary" data-toggle="modal" data-target="#processSingleSubmission" id='save_edits'>Process Submission</button>
+                            <button type="button" class="btn btn-outline btn-success" data-toggle="modal" data-target="#saveRawDataEditsModal" id='save_edits'>Save Edits</button>
+                        </div>
+                    </div>
+                    <div class="ibox-content" id='edit_raw_json'>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+    <div class="modal inmodal" id="saveRawDataEditsModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content animated bounceInRight">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Confirm Saving Edited Data</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to SAVE the edited raw data?  <strong>This process can be dangerous!</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                    <button type="button" id='confirm_save_edits' class="btn btn-danger">Save Edits</button>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+    <div class="modal inmodal" id="processSingleSubmission" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content animated bounceInRight">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Confirm Process Single Submission</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to PROCESS the current submission using the DEFINED MAPPINGS?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                    <button type="button" id='confirm_process_submission' class="btn btn-primary">Process Submission</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxcore.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/jqwidgets/jqwidgets/jqxnotification.js') }}"></script>
+
+    <script type="text/javascript" src="{{ static('bower/dynatable/jquery.dynatable.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bower/json-editor/dist/jsoneditor.min.js') }}"></script>
+    
+    <script type='text/javascript' src="{{ static('js/adgg.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+            BadiliDash.data = {};
+            dash.initiateProcessingErrorsPage();
+        });
+    </script>
+</div>
+
+{% endblock %}

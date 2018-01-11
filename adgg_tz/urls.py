@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^dashboard$', views.show_dashboard, name='dashboard'),
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'static/(?P<path>.*)$', views.serve_static_files),
+    url(r'^farmers$', views.farmers, name='farmers'),
 ]
