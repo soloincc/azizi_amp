@@ -1,0 +1,6 @@
+[submodule "odk_dashboard"]
+	path = odk_dashboard
+	url = https://github.com/badili/odk_dashboard.git
+[submodule "vendor"]
+	path = vendor
+	url = https://github.com/badili/odk_parser.git
