@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import requests, re, os, collections
 import logging, traceback, json
 import copy
@@ -6,7 +8,7 @@ import hashlib
 import dateutil.parser
 import math
 
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 from datetime import datetime
 from collections import defaultdict, OrderedDict
 
@@ -19,7 +21,7 @@ from raven import Client
 
 from vendor.models import ODKForm, RawSubmissions, FormViews, ViewsData, ViewTablesLookup, DictionaryItems, FormMappings, ProcessingErrors, ODKFormGroup
 
-from sql import Query
+from .sql import Query
 from vendor.terminal_output import Terminal
 from vendor.odk_parser import OdkParser
 from vendor.excel_writer import ExcelWriter
@@ -173,7 +175,7 @@ class ADGG():
         p = Paginator(all_errors, per_page)
         p_errors = p.page(cur_page)
         if sorts is not None:
-            print sorts
+            print(sorts)
 
         to_return = []
         with connections['mapped'].cursor() as cursor:

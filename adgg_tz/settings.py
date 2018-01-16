@@ -135,6 +135,7 @@ else:
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.mysql',
+                'DRIVER': 'mysql',
                 'NAME': configs['default']['db'],
                 'USER': configs['default']['user'],
                 'PASSWORD': configs['default']['passwd'],
@@ -143,6 +144,7 @@ else:
             },
             'mapped': {
                 'ENGINE': 'django.db.backends.mysql',
+                'DRIVER': 'mysql',
                 'NAME': configs['mapped']['db'],
                 'USER': configs['mapped']['user'],
                 'PASSWORD': configs['mapped']['passwd'],

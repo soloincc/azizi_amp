@@ -3,7 +3,7 @@ from __future__ import absolute_import  # Python 2 only
 import posixpath
 import json
 
-from urlparse import unquote
+from urllib.parse import unquote
 
 from django.http import Http404
 from django.conf import settings

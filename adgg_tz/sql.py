@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 from django.db import connections
 from vendor.terminal_output import Terminal
-from settings import DATABASES
+from .settings import DATABASES
 
 terminal = Terminal()
 
