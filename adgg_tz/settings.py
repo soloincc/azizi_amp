@@ -211,6 +211,8 @@ LOCALES = {
 
 LOOKUP_TABLE = 'dictionary_items'
 
+TEMPDIR = './temp'
+
 # The number of records to use for the dry run
 DRY_RUN_RECORDS = 30
 
