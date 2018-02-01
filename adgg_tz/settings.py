@@ -54,7 +54,9 @@ INSTALLED_APPS = [
 
     'adgg_tz',
     'vendor',
-    'odk_dashboard'
+    'odk_dashboard',
+    # 'guardian',
+    'easy_thumbnails',
 ]
 
 MIDDLEWARE = [
@@ -140,7 +142,13 @@ else:
                 'USER': configs['default']['user'],
                 'PASSWORD': configs['default']['passwd'],
                 'HOST': configs['default']['host'],
-                'PORT': configs['default']['port']
+                'PORT': configs['default']['port'],
+                'OPTIONS': {
+                    'sql_mode': 'TRADITIONAL',
+                    'charset': 'utf8',
+                    'init_command': 'SET storage_engine=INNODB, character_set_connection=utf8, collation_connection=utf8_bin',
+                    # 'init_command': 'SET storage_engine=INNODB, character_set_connection=utf8, collation_connection=utf8_bin, SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED',
+                }  # Now we have a mild degree of confidence :-)
             },
             'mapped': {
                 'ENGINE': 'django.db.backends.mysql',
@@ -214,6 +222,7 @@ LOOKUP_TABLE = 'dictionary_items'
 TEMPDIR = './temp'
 
 # The number of records to use for the dry run
+IS_DRY_RUN = True
 DRY_RUN_RECORDS = 30
 
 ERR_CODES = {
@@ -226,3 +235,16 @@ ERR_CODES = {
 JOINER = ' - '
 
 GPS_REGEX = '-?\d{1,3}\.\d+\s-?\d{1,3}\.\d+\s\d{1,5}\.\d+\s\d{1,4}\.\d{1,2}'
+
+# ##################  MEDIA ##################
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+PROFILE_PHOTO_DIR = ('uploads/profiles')  # If you change this
+#                           Remember to update the model Profile
+
+# ################# EMAIL SETTINGS ###########
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'me@gmail.com'
+EMAIL_HOST_PASSWORD = 'password'
