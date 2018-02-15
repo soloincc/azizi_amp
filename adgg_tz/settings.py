@@ -222,7 +222,7 @@ LOOKUP_TABLE = 'dictionary_items'
 TEMPDIR = './temp'
 
 # The number of records to use for the dry run
-IS_DRY_RUN = True
+IS_DRY_RUN = False
 DRY_RUN_RECORDS = 30
 
 ERR_CODES = {
